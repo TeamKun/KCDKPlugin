@@ -1069,7 +1069,7 @@ function createEndConditionCard(conditionNumber) {
                 </div>
                 <div class="composite-conditions-container flex flex-wrap items-start gap-2">
                     <!-- 複合条件がここに追加される -->
-                    <button type="button" class="add-composite-condition-btn flex items-center justify-center w-48 h-42 rounded-lg border-2 border-dashed border-gray-300 text-gray-400 transition hover:border-indigo-400 hover:text-indigo-500">
+                    <button type="button" class="add-composite-condition-btn flex items-center justify-center w-48 h-46 rounded-lg border-2 border-dashed border-gray-300 text-gray-400 transition hover:border-indigo-400 hover:text-indigo-500">
                         <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                             <path d="M12 4v16m8-8H4" />
                         </svg>
@@ -1162,11 +1162,13 @@ function createCompositeConditionCard() {
             <!-- Beacon -->
             <div class="composite-beacon-fields space-y-1">
                 <input type="text" name="composite-beacon-world" placeholder="world" value="world" class="block w-full rounded border border-gray-300 bg-white px-2 py-1 text-xs" />
+                <label class="mb-1 block text-xs text-gray-500">座標 (X / Y / Z)</label>
                 <div class="grid grid-cols-3 gap-1">
                     <input type="number" name="composite-beacon-x" placeholder="X" step="0.01" value="0" class="block w-full rounded border border-gray-300 bg-white px-1 py-1 text-xs" />
                     <input type="number" name="composite-beacon-y" placeholder="Y" step="0.01" value="64" class="block w-full rounded border border-gray-300 bg-white px-1 py-1 text-xs" />
                     <input type="number" name="composite-beacon-z" placeholder="Z" step="0.01" value="0" class="block w-full rounded border border-gray-300 bg-white px-1 py-1 text-xs" />
                 </div>
+                <label class="mb-1 block text-xs text-gray-500">(Yaw / Pitch / HP)</label>
                 <div class="grid grid-cols-3 gap-1">
                     <input type="number" name="composite-beacon-yaw" placeholder="Yaw" step="0.1" value="0" class="block w-full rounded border border-gray-300 bg-white px-1 py-1 text-xs" />
                     <input type="number" name="composite-beacon-pitch" placeholder="Pitch" step="0.1" value="180" class="block w-full rounded border border-gray-300 bg-white px-1 py-1 text-xs" />
