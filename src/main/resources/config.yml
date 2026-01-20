@@ -1,0 +1,117 @@
+# KCDK Plugin Configuration
+config-version: 1
+
+# ゲームモード設定
+# 選択肢: survival, adventure, creative, spectator
+gamemode: survival
+
+# 時間制限設定（null可）
+timeLimit:
+  hour: 0
+  minutes: 10
+  second: 0
+
+# チーム設定
+teams:
+  - name: blue
+    displayName: "§9青チーム"
+    armorColor: 255
+    readyLocation:
+      world: world
+      x: 0.0
+      y: 64.0
+      z: 0.0
+      yaw: 0.0
+      pitch: 0.0
+    respawnLocation:
+      world: world
+      x: 0.0
+      y: 64.0
+      z: 0.0
+      yaw: 0.0
+      pitch: 0.0
+    stock: -1
+    waitingTime:
+      hour: 0
+      minutes: 0
+      second: 30
+    effects: []
+    roles: []
+
+  - name: red
+    displayName: "§c赤チーム"
+    armorColor: 16711680
+    readyLocation:
+      world: world
+      x: 100.0
+      y: 64.0
+      z: 0.0
+      yaw: 180.0
+      pitch: 0.0
+    respawnLocation:
+      world: world
+      x: 100.0
+      y: 64.0
+      z: 0.0
+      yaw: 180.0
+      pitch: 0.0
+    stock: -1
+    waitingTime:
+      hour: 0
+      minutes: 0
+      second: 30
+    effects: []
+    roles:
+      - name: captain
+        displayName: "§e大将"
+        armorColor: null
+        readyLocation: null
+        respawnLocation:
+          world: world
+          x: 110.0
+          y: 64.0
+          z: 0.0
+          yaw: 180.0
+          pitch: 0.0
+        stock: null
+        waitingTime: null
+        effects:
+          - name: SPEED
+            second: 999999
+            amplifier: 1
+            hideParticles: false
+          - name: STRENGTH
+            second: 999999
+            amplifier: 0
+            hideParticles: false
+        extendsEffects: true
+        extendsItem: true
+
+# 終了条件設定
+endConditions:
+  # TimeLimit（timeLimitが設定されている場合自動適用）
+  - type: TimeLimit
+    message: "§e時間切れ！"
+
+  # Beacon破壊条件
+  - type: Beacon
+    message: "§cビーコンが破壊された！"
+    location:
+      world: world
+      x: 0.0
+      y: 64.0
+      z: 0.0
+      yaw: 0.0
+      pitch: 0.0
+    hitpoint: 100
+
+  # 殲滅条件
+  - type: Extermination
+    message: "§4全滅！"
+    team: blue
+
+  # チケット制条件
+  - type: Ticket
+    message: "§6チケットが尽きた！"
+    team: red
+    count: 50

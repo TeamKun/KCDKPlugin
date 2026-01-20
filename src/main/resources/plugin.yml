@@ -2,3 +2,17 @@ name: '${name}'
 version: '${version}'
 main: '${MainClass}'
 api-version: 1.16
+
+commands:
+  kcdk:
+    description: KCDK main command
+    usage: /kcdk <setup|team|game|config>
+    permission: kcdk.use
+
+permissions:
+  kcdk.use:
+    description: Allows using KCDK commands
+    default: op
+  kcdk.admin:
+    description: Allows using KCDK admin commands
+    default: op
