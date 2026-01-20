@@ -1,0 +1,163 @@
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.StandardCopyOption
+
+plugins {
+    id "java"
+    id "com.github.johnrengelman.shadow" version "7.1.2"
+}
+
+group = "net.kunmc.lab"
+version = "1.0.0"
+
+repositories {
+    mavenCentral()
+    maven {
+        name = "papermc-repo"
+        url = "https://repo.papermc.io/repository/maven-public/"
+    }
+    maven {
+        name = "sonatype"
+        url = "https://oss.sonatype.org/content/groups/public/"
+    }
+    maven {
+        name = "enginehub-maven"
+        url = "https://maven.enginehub.org/repo/"
+    }
+    maven { url = "https://repo.dmulloy2.net/repository/public/" }
+    maven { url = 'https://jitpack.io' }
+    flatDir { dirs "server/cache", "libs" }
+}
+
+dependencies {
+    compileOnly "io.papermc.paper:paper-api:1.20.4-R0.1-SNAPSHOT"
+    //compileOnly "com.sk89q.worldedit:worldedit-bukkit:latest.release"
+    //compileOnly "com.sk89q.worldedit:worldedit-core:latest.release"
+    //compileOnly "com.comphenix.protocol:ProtocolLib:latest.release"
+    //compileOnly name: "patched_1.20.4"
+    implementation 'com.github.TeamKun.CommandLib:bukkit:latest.release'
+    implementation 'com.github.TeamKun.ConfigLib:bukkit:latest.release'
+}
+
+def targetJavaVersion = 17
+java {
+    def javaVersion = JavaVersion.toVersion(targetJavaVersion)
+    sourceCompatibility = javaVersion
+    targetCompatibility = javaVersion
+    if (JavaVersion.current() < javaVersion) {
+        toolchain.languageVersion = JavaLanguageVersion.of(targetJavaVersion)
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = "UTF-8"
+    if (targetJavaVersion >= 10 || JavaVersion.current().isJava10Compatible()) {
+        options.release = targetJavaVersion
+    }
+}
+
+jar {
+    doFirst {
+        copy {
+            from '.'
+            into buildDir.name + '/resources/main/'
+            include 'LICENSE*'
+        }
+    }
+}
+
+shadowJar {
+    mergeServiceFiles()
+    archiveFileName = "${rootProject.name}-${project.version}.jar"
+    relocate "net.kunmc.lab.commandlib", "${project.group}.${project.name.toLowerCase()}.commandlib"
+    relocate "net.kunmc.lab.configlib", "${project.group}.${project.name.toLowerCase()}.configlib"
+}
+tasks.build.dependsOn tasks.shadowJar
+
+processResources {
+    def props = [name: rootProject.name, version: version, MainClass: getMainClassFQCN(projectDir.toPath())]
+    inputs.properties props
+    filteringCharset "UTF-8"
+    filesMatching("plugin.yml") {
+        expand props
+    }
+}
+
+task copyToServer(group: "copy") {
+    mustRunAfter build
+
+    doLast {
+        copy {
+            from new File(buildDir.absolutePath, "libs/${rootProject.name}-${version}.jar")
+            into "./server/plugins"
+            rename { String fileName ->
+                fileName.replace("-${version}", "")
+            }
+        }
+    }
+}
+
+task copyProtocolLibToServer(group: "copy", type: Copy) {
+    String fileNamePattern = ".*ProtocolLib.*.jar"
+
+    boolean exists = new File("server/plugins/").listFiles(new FilenameFilter() {
+        @Override
+        boolean accept(File dir, String name) {
+            return name.matches(fileNamePattern)
+        }
+    })
+    if (exists) {
+        return
+    }
+
+    configurations.compileClasspath.getFiles().stream()
+            .filter(x -> x.getName().matches(fileNamePattern))
+            .findFirst()
+            .ifPresent(x -> {
+                from x
+                into "server/plugins"
+            })
+}
+
+task buildAndCopy(group: "build") {
+    dependsOn build, copyToServer
+}
+
+task downloadServerJar {
+    URL url = new URL("https://api.papermc.io/v2/projects/paper/versions/1.20.4/builds/497/downloads/paper-1.20.4-497.jar")
+
+    File file = new File(projectDir.toPath().toAbsolutePath().toString() + "/server/server.jar")
+
+    if (!file.exists()) {
+        try (InputStream stream = url.openStream()) {
+            Files.copy(stream, file.toPath(), StandardCopyOption.REPLACE_EXISTING)
+        }
+    }
+}
+
+task generatePatchedJar(group: "setup", dependsOn: downloadServerJar) {
+    String serverDir = projectDir.toPath().toAbsolutePath().toString() + "/server"
+
+    File file = new File(serverDir + "/cache/patched_1.20.4.jar")
+    if (file.exists()) {
+        return
+    }
+
+    try {
+        Runtime runtime = Runtime.getRuntime()
+        Process p = runtime.exec("java -jar " + serverDir + "/server.jar nogui", new String[0], new File(serverDir))
+        p.waitFor()
+        p.destroy()
+    } catch (Exception e) {
+        e.printStackTrace()
+    }
+}
+
+static String getMainClassFQCN(Path projectPath) {
+    Path mainClassFile = Files.walk(projectPath)
+            .filter(x -> x.getFileName().toString().endsWith(".java"))
+            .filter(path -> Files.lines(path).anyMatch(str -> str.contains("extends JavaPlugin")))
+            .findFirst()
+            .get()
+    return mainClassFile.toString().replace("\\", ".").replace("/", ".").replaceAll(".*src.main.java.|.java\$", "")
+}
