@@ -161,11 +161,11 @@ function validateRoleCard(card, teamNumber, roleNumber) {
     }
 
     // 継承していない場合は各項目必須
-    // 装備色
+    // アーマーカラー
     const colorInherit = card.querySelector('input[name="role-inherit-color"]');
     const colorInput = card.querySelector('input[name="role-color"]');
     if (colorInherit && !colorInherit.checked && colorInput && !colorInput.value) {
-        errors.push({ section, message: '装備色は必須です', input: colorInput });
+        errors.push({ section, message: 'アーマーカラーは必須です', input: colorInput });
     }
 
     // リスポーン回数
@@ -370,7 +370,7 @@ function setupToggleDisable(toggleId, targetIds) {
 // チーム管理
 const defaultColors = ['#ef4444', '#3b82f6', '#22c55e', '#eab308', '#a855f7', '#ec4899', '#14b8a6', '#f97316'];
 
-// チームカラーを薄くした背景色を生成
+// アーマーカラーを薄くした背景色を生成
 function hexToRgba(hex, alpha) {
     const r = parseInt(hex.slice(1, 3), 16);
     const g = parseInt(hex.slice(3, 5), 16);
@@ -388,7 +388,7 @@ function updateTeamCardBackground(card) {
     }
 }
 
-// チームカラー変更時のイベント設定
+// アーマーカラー変更時のイベント設定
 function setupTeamColorChange(card) {
     const colorInput = card.querySelector('input[name="team-color"]');
     if (colorInput) {
@@ -452,7 +452,7 @@ function createTeamCard(teamNumber) {
                     <input type="text" name="team-display-name" placeholder="例: チーム${teamNumber}" class="block w-full rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-gray-800 shadow-sm transition placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/20" />
                 </div>
                 <div>
-                    <label class="mb-2 block text-sm font-semibold text-gray-800">チームカラー</label>
+                    <label class="mb-2 block text-sm font-semibold text-gray-800">アーマーカラー</label>
                     <input type="color" name="team-color" value="${defaultColors[colorIndex]}" class="h-10 w-full rounded-xl border border-gray-300 cursor-pointer" />
                 </div>
                 <div>
@@ -573,7 +573,7 @@ function createTeamCard(teamNumber) {
     // ロール管理のイベント
     setupRoleManagement(card);
 
-    // チームカラー背景色の設定
+    // アーマーカラー背景色の設定
     setupTeamColorChange(card);
 
     return card;
@@ -620,7 +620,7 @@ function setupTeamManagement() {
         }
         // 待機地点トグル
         setupTeamLobbyToggle(card);
-        // チームカラー背景色
+        // アーマーカラー背景色
         setupTeamColorChange(card);
     });
 
@@ -754,11 +754,11 @@ function createRoleCard() {
                     <input type="text" name="role-display-name" placeholder="例: 大将" class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-800 placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
                 </div>
             </div>
-            <!-- 装備色・リスポーン回数 -->
+            <!-- アーマーカラー・リスポーン回数 -->
             <div class="space-y-2">
                 <div class="role-inherit-section" data-field="color">
                     <div class="flex items-center justify-between mb-1">
-                        <label class="text-xs font-semibold text-gray-600">装備色</label>
+                        <label class="text-xs font-semibold text-gray-600">アーマーカラー</label>
                         <label class="inline-flex cursor-pointer items-center gap-1">
                             <span class="text-xs text-gray-400">所属チームの設定を継承</span>
                             <input type="checkbox" name="role-inherit-color" class="peer sr-only role-inherit-toggle" checked />
@@ -769,14 +769,14 @@ function createRoleCard() {
                 </div>
                 <div class="role-inherit-section" data-field="respawn">
                     <div class="flex items-center justify-between mb-1">
-                        <label class="text-xs font-semibold text-gray-600">リスポーン回数</label>
+                        <label class="text-xs font-semibold text-gray-600">リスポーン回数（-1=無限）</label>
                         <label class="inline-flex cursor-pointer items-center gap-1">
                             <span class="text-xs text-gray-400">所属チームの設定を継承</span>
                             <input type="checkbox" name="role-inherit-respawn" class="peer sr-only role-inherit-toggle" checked />
                             <div class="relative h-4 w-7 rounded-full bg-gray-300 transition-colors duration-200 peer-checked:bg-indigo-600 after:absolute after:left-0.5 after:top-0.5 after:h-3 after:w-3 after:rounded-full after:bg-white after:transition-transform after:duration-200 peer-checked:after:translate-x-3"></div>
                         </label>
                     </div>
-                    <input type="number" name="role-respawn-count" min="-1" placeholder="-1 = 無限" class="role-inherit-field block w-full rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-800 placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 opacity-50 cursor-not-allowed bg-gray-100" disabled />
+                    <input type="number" name="role-respawn-count" min="-1" value=0 class="role-inherit-field block w-full rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-800 placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 opacity-50 cursor-not-allowed bg-gray-100" disabled />
                 </div>
             </div>
             <!-- 待機地点 -->
@@ -842,7 +842,7 @@ function createRoleCard() {
                 </div>
                 <div class="role-effects-container flex flex-wrap items-center gap-2">
                     <!-- ロールエフェクトがここに追加される -->
-                    <button type="button" class="add-role-effect-btn flex items-center justify-center w-36 h-20 rounded-lg border-2 border-dashed border-gray-300 text-gray-400 transition hover:border-indigo-400 hover:text-indigo-500">
+                    <button type="button" class="add-role-effect-btn flex items-center justify-center w-32 h-30 rounded-lg border-2 border-dashed border-gray-300 text-gray-400 transition hover:border-indigo-400 hover:text-indigo-500">
                         <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                             <path d="M12 4v16m8-8H4" />
                         </svg>

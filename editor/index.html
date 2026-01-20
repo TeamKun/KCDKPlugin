@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,29 +13,35 @@
             background-color: #f8f9fa;
             font-size: 14px;
         }
+
         .container {
             max-width: 1400px;
             background: white;
             padding: 20px;
             border-radius: 6px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
+
         h1 {
             color: #333;
             margin-bottom: 10px;
             font-size: 24px;
         }
+
         .text-muted {
             font-size: 13px;
             margin-bottom: 15px;
         }
+
         #editor_holder {
             margin-bottom: 15px;
         }
+
         /* コンパクトなフォーム要素 */
         .json-editor-container {
             font-size: 13px;
         }
+
         input[type="text"],
         input[type="number"],
         select {
@@ -42,24 +49,31 @@
             font-size: 13px !important;
             height: 28px !important;
         }
+
         .form-control {
             padding: 4px 8px !important;
             font-size: 13px !important;
         }
+
         label {
             font-size: 13px !important;
             margin-bottom: 3px !important;
             font-weight: 500;
         }
+
         .form-group {
             margin-bottom: 10px !important;
         }
+
         /* ヘッダーをコンパクトに */
-        h3, h4, h5 {
+        h3,
+        h4,
+        h5 {
             font-size: 15px !important;
             margin: 8px 0 !important;
             font-weight: 600;
         }
+
         .alert {
             position: fixed;
             top: 15px;
@@ -68,6 +82,7 @@
             min-width: 250px;
             font-size: 13px;
         }
+
         .footer-buttons {
             display: flex;
             gap: 8px;
@@ -78,17 +93,21 @@
             padding: 10px 0;
             border-top: 1px solid #dee2e6;
         }
+
         .footer-buttons button {
             flex: 1;
             padding: 10px 15px !important;
             font-size: 14px !important;
         }
+
         /* ボタン全般をコンパクトに */
-        button, .btn {
+        button,
+        .btn {
             padding: 4px 10px !important;
             font-size: 13px !important;
             line-height: 1.4;
         }
+
         /* 配列操作ボタン */
         .json-editor-btn-add,
         .json-editor-btn-delete,
@@ -98,59 +117,75 @@
             font-size: 12px !important;
             margin: 0 2px;
         }
+
         /* 配列の最後の要素を削除するボタンを非表示 */
         .json-editor-btntype-deletelast {
             display: none !important;
         }
+
         /* null許容フィールドのスタイル改善 */
         .json-editor-btntype-delete {
             background-color: #dc3545 !important;
             border-color: #dc3545 !important;
             color: white !important;
         }
+
         .json-editor-btntype-add {
             background-color: #28a745 !important;
             border-color: #28a745 !important;
             color: white !important;
         }
+
         /* nullフィールドの表示を改善 */
         .json-editor-btn-delete::before {
             content: "❌ ";
         }
+
         .json-editor-btn-add::before {
             content: "➕ ";
         }
+
         /* アコーディオンの開閉ボタンを矢印に変更 */
         .json-editor-btntype-toggle {
             font-size: 0 !important;
             min-width: 24px !important;
             padding: 4px 8px !important;
         }
+
         .json-editor-btntype-toggle::before {
             content: "▼";
             font-size: 13px;
             display: inline-block;
             transition: transform 0.2s;
         }
+
         .json-editor-btntype-toggle.collapsed::before {
             content: "▶";
         }
+
         /* カード風のセクション */
         .card {
             margin-bottom: 10px !important;
         }
+
         .card-body {
             padding: 12px !important;
         }
+
         /* 配列アイテムのヘッダー */
         .row {
             margin-bottom: 8px !important;
         }
+
         /* グリッド表示を改善 */
-        .col-md-2, .col-md-3, .col-md-4, .col-md-6 {
+        .col-md-2,
+        .col-md-3,
+        .col-md-4,
+        .col-md-6 {
             padding-left: 5px !important;
             padding-right: 5px !important;
         }
+
         /* 階層ごとに背景色を交互に変える */
         /* レベル1: teams, endConditions配列のアイテム */
         [data-schemapath^="root.teams."],
@@ -160,6 +195,7 @@
             margin-bottom: 8px !important;
             border-radius: 4px !important;
         }
+
         /* レベル2: roles, effects, conditions配列のアイテム */
         [data-schemapath*=".roles."],
         [data-schemapath*=".effects."],
@@ -169,6 +205,7 @@
             margin-bottom: 6px !important;
             border-radius: 4px !important;
         }
+
         /* レベル3以降はさらに濃く */
         [data-schemapath*=".roles."] [data-schemapath*=".effects."],
         [data-schemapath*=".conditions."] [data-schemapath*=".location"],
@@ -180,6 +217,7 @@
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <h1>🎮 KCDK Configuration Editor</h1>
@@ -415,33 +453,33 @@
                             },
                             "armorColor": {
                                 "type": "integer",
-                                "title": "装備色（RGB）"
+                                "title": "アーマーカラー（RGB）"
                             },
                             "readyLocation": {
                                 "title": "待機地点",
                                 "type": "object",
-                                "required": ["world", "x", "y","z","yaw","pitch"],
+                                "required": ["world", "x", "y", "z", "yaw", "pitch"],
                                 "description": "nullの場合、待機地点なしで開始時にrespawnLocationへ直接テレポートします",
                                 "properties": {
-                                    "world": {"type": "string", "title": "ワールド"},
-                                    "x": {"type": "number", "title": "X座標"},
-                                    "y": {"type": "number", "title": "Y座標"},
-                                    "z": {"type": "number", "title": "Z座標"},
-                                    "yaw": {"type": "number", "title": "Yaw"},
-                                    "pitch": {"type": "number", "title": "Pitch"}
+                                    "world": { "type": "string", "title": "ワールド" },
+                                    "x": { "type": "number", "title": "X座標" },
+                                    "y": { "type": "number", "title": "Y座標" },
+                                    "z": { "type": "number", "title": "Z座標" },
+                                    "yaw": { "type": "number", "title": "Yaw" },
+                                    "pitch": { "type": "number", "title": "Pitch" }
                                 }
                             },
                             "respawnLocation": {
                                 "type": "object",
                                 "title": "リスポーン地点（必須）",
-                                "required": ["world", "x", "y","z","yaw","pitch"],
+                                "required": ["world", "x", "y", "z", "yaw", "pitch"],
                                 "properties": {
-                                    "world": {"type": "string", "title": "ワールド"},
-                                    "x": {"type": "number", "title": "X座標"},
-                                    "y": {"type": "number", "title": "Y座標"},
-                                    "z": {"type": "number", "title": "Z座標"},
-                                    "yaw": {"type": "number", "title": "Yaw"},
-                                    "pitch": {"type": "number", "title": "Pitch"}
+                                    "world": { "type": "string", "title": "ワールド" },
+                                    "x": { "type": "number", "title": "X座標" },
+                                    "y": { "type": "number", "title": "Y座標" },
+                                    "z": { "type": "number", "title": "Z座標" },
+                                    "yaw": { "type": "number", "title": "Yaw" },
+                                    "pitch": { "type": "number", "title": "Pitch" }
                                 }
                             },
                             "stock": {
@@ -453,9 +491,9 @@
                                 "title": "待機時間",
                                 "required": ["hour", "minutes", "second"],
                                 "properties": {
-                                    "hour": {"type": "integer", "title": "時間"},
-                                    "minutes": {"type": "integer", "title": "分"},
-                                    "second": {"type": "integer", "title": "秒"}
+                                    "hour": { "type": "integer", "title": "時間" },
+                                    "minutes": { "type": "integer", "title": "分" },
+                                    "second": { "type": "integer", "title": "秒" }
                                 }
                             },
                             "effects": {
@@ -466,10 +504,10 @@
                                     "title": " ",
                                     "required": ["name", "second", "amplifier", "hideParticles"],
                                     "properties": {
-                                        "name": {"type": "string", "title": "エフェクト名"},
-                                        "second": {"type": "integer", "title": "持続時間（秒）"},
-                                        "amplifier": {"type": "integer", "title": "レベル"},
-                                        "hideParticles": {"type": "boolean", "title": "パーティクル非表示"}
+                                        "name": { "type": "string", "title": "エフェクト名" },
+                                        "second": { "type": "integer", "title": "持続時間（秒）" },
+                                        "amplifier": { "type": "integer", "title": "レベル" },
+                                        "hideParticles": { "type": "boolean", "title": "パーティクル非表示" }
                                     }
                                 }
                             },
@@ -481,7 +519,7 @@
                                     "title": " ",
                                     "required": ["name", "respawnLocation", "effects", "extendsEffects", "extendsItem"],
                                     "properties": {
-                                        "name": {"type": "string", "title": "ロール名"},
+                                        "name": { "type": "string", "title": "ロール名" },
                                         "displayName": {
                                             "type": ["string", "null"],
                                             "title": "表示名",
@@ -489,37 +527,37 @@
                                         },
                                         "armorColor": {
                                             "type": ["integer", "null"],
-                                            "title": "装備色",
-                                            "description": "nullの場合は親チームの装備色を継承します"
+                                            "title": "アーマーカラー",
+                                            "description": "nullの場合は親チームのアーマーカラーを継承します"
                                         },
                                         "readyLocation": {
                                             "type": ["object", "null"],
                                             "title": "待機地点",
                                             "description": "nullの場合は親チームの待機地点を継承します",
                                             "properties": {
-                                                "world": {"type": "string", "title": "ワールド"},
-                                                "x": {"type": "number", "title": "X"},
-                                                "y": {"type": "number", "title": "Y"},
-                                                "z": {"type": "number", "title": "Z"},
-                                                "yaw": {"type": "number", "title": "Yaw"},
-                                                "pitch": {"type": "number", "title": "Pitch"}
+                                                "world": { "type": "string", "title": "ワールド" },
+                                                "x": { "type": "number", "title": "X" },
+                                                "y": { "type": "number", "title": "Y" },
+                                                "z": { "type": "number", "title": "Z" },
+                                                "yaw": { "type": "number", "title": "Yaw" },
+                                                "pitch": { "type": "number", "title": "Pitch" }
                                             }
                                         },
                                         "respawnLocation": {
                                             "type": "object",
                                             "title": "リスポーン地点（必須）",
                                             "properties": {
-                                                "world": {"type": "string", "title": "ワールド"},
-                                                "x": {"type": "number", "title": "X"},
-                                                "y": {"type": "number", "title": "Y"},
-                                                "z": {"type": "number", "title": "Z"},
-                                                "yaw": {"type": "number", "title": "Yaw"},
-                                                "pitch": {"type": "number", "title": "Pitch"}
+                                                "world": { "type": "string", "title": "ワールド" },
+                                                "x": { "type": "number", "title": "X" },
+                                                "y": { "type": "number", "title": "Y" },
+                                                "z": { "type": "number", "title": "Z" },
+                                                "yaw": { "type": "number", "title": "Yaw" },
+                                                "pitch": { "type": "number", "title": "Pitch" }
                                             }
                                         },
                                         "stock": {
                                             "type": ["integer", "null"],
-                                            "title": "リスポーン回数",
+                                            "title": "リスポーン回数（-1=無限）",
                                             "description": "nullの場合は親チームのリスポーン回数を継承します"
                                         },
                                         "waitingTime": {
@@ -527,9 +565,9 @@
                                             "title": "待機時間",
                                             "description": "nullの場合は親チームの待機時間を継承します",
                                             "properties": {
-                                                "hour": {"type": "integer", "title": "時間"},
-                                                "minutes": {"type": "integer", "title": "分"},
-                                                "second": {"type": "integer", "title": "秒"}
+                                                "hour": { "type": "integer", "title": "時間" },
+                                                "minutes": { "type": "integer", "title": "分" },
+                                                "second": { "type": "integer", "title": "秒" }
                                             }
                                         },
                                         "effects": {
@@ -538,15 +576,15 @@
                                             "items": {
                                                 "type": "object",
                                                 "properties": {
-                                                    "name": {"type": "string", "title": "エフェクト名"},
-                                                    "second": {"type": "integer", "title": "持続時間"},
-                                                    "amplifier": {"type": "integer", "title": "レベル"},
-                                                    "hideParticles": {"type": "boolean", "title": "パーティクル非表示"}
+                                                    "name": { "type": "string", "title": "エフェクト名" },
+                                                    "second": { "type": "integer", "title": "持続時間" },
+                                                    "amplifier": { "type": "integer", "title": "レベル" },
+                                                    "hideParticles": { "type": "boolean", "title": "パーティクル非表示" }
                                                 }
                                             }
                                         },
-                                        "extendsEffects": {"type": "boolean", "title": "親チームのエフェクトを継承"},
-                                        "extendsItem": {"type": "boolean", "title": "親チームのアイテムを継承"}
+                                        "extendsEffects": { "type": "boolean", "title": "親チームのエフェクトを継承" },
+                                        "extendsItem": { "type": "boolean", "title": "親チームのアイテムを継承" }
                                     }
                                 }
                             }
@@ -563,50 +601,50 @@
                         "oneOf": [
                             {
                                 "title": "Beacon（ビーコン破壊）",
-                                "required": ["type", "message", "location","hitpoint"],
+                                "required": ["type", "message", "location", "hitpoint"],
                                 "properties": {
-                                    "type": {"type": "string", "enum": ["Beacon"], "default": "Beacon"},
-                                    "message": {"type": "string", "title": "メッセージ", "default": "§cビーコンが破壊された！"},
+                                    "type": { "type": "string", "enum": ["Beacon"], "default": "Beacon" },
+                                    "message": { "type": "string", "title": "メッセージ", "default": "§cビーコンが破壊された！" },
                                     "location": {
                                         "type": "object",
                                         "title": "座標",
-                                        "required": ["world", "x", "y","z","yaw","pitch"],
+                                        "required": ["world", "x", "y", "z", "yaw", "pitch"],
                                         "properties": {
-                                            "world": {"type": "string", "title": "ワールド", "default": "world"},
-                                            "x": {"type": "number", "title": "X", "default": 0},
-                                            "y": {"type": "number", "title": "Y", "default": 64},
-                                            "z": {"type": "number", "title": "Z", "default": 0},
-                                            "yaw": {"type": "number", "title": "Yaw", "default": 0},
-                                            "pitch": {"type": "number", "title": "Pitch", "default": 0}
+                                            "world": { "type": "string", "title": "ワールド", "default": "world" },
+                                            "x": { "type": "number", "title": "X", "default": 0 },
+                                            "y": { "type": "number", "title": "Y", "default": 64 },
+                                            "z": { "type": "number", "title": "Z", "default": 0 },
+                                            "yaw": { "type": "number", "title": "Yaw", "default": 0 },
+                                            "pitch": { "type": "number", "title": "Pitch", "default": 0 }
                                         }
                                     },
-                                    "hitpoint": {"type": "integer", "title": "HP", "default": 100}
+                                    "hitpoint": { "type": "integer", "title": "HP", "default": 100 }
                                 }
                             },
                             {
                                 "title": "Extermination（全滅）",
                                 "required": ["type", "message", "team"],
                                 "properties": {
-                                    "type": {"type": "string", "enum": ["Extermination"], "default": "Extermination"},
-                                    "message": {"type": "string", "title": "メッセージ", "default": "§4全滅！"},
-                                    "team": {"type": "string", "title": "チーム名"}
+                                    "type": { "type": "string", "enum": ["Extermination"], "default": "Extermination" },
+                                    "message": { "type": "string", "title": "メッセージ", "default": "§4全滅！" },
+                                    "team": { "type": "string", "title": "チーム名" }
                                 }
                             },
                             {
                                 "title": "Ticket（チケット）",
                                 "properties": {
-                                    "type": {"type": "string", "enum": ["Ticket"], "default": "Ticket"},
-                                    "message": {"type": "string", "title": "メッセージ", "default": "§6チケットが尽きた！"},
-                                    "team": {"type": "string", "title": "チーム名"},
-                                    "count": {"type": "integer", "title": "チケット数", "default": 50}
+                                    "type": { "type": "string", "enum": ["Ticket"], "default": "Ticket" },
+                                    "message": { "type": "string", "title": "メッセージ", "default": "§6チケットが尽きた！" },
+                                    "team": { "type": "string", "title": "チーム名" },
+                                    "count": { "type": "integer", "title": "チケット数", "default": 50 }
                                 }
                             },
                             {
                                 "title": "Composite（複合条件 - AND）",
                                 "description": "複数の条件をすべて達成で判定",
                                 "properties": {
-                                    "type": {"type": "string", "enum": ["Composite"], "default": "Composite"},
-                                    "message": {"type": "string", "title": "メッセージ", "default": "§a条件達成！"},
+                                    "type": { "type": "string", "enum": ["Composite"], "default": "Composite" },
+                                    "message": { "type": "string", "title": "メッセージ", "default": "§a条件達成！" },
                                     "conditions": {
                                         "type": "array",
                                         "title": "条件リスト",
@@ -617,38 +655,38 @@
                                                 {
                                                     "title": "Beacon",
                                                     "properties": {
-                                                        "type": {"type": "string", "enum": ["Beacon"], "default": "Beacon"},
-                                                        "message": {"type": "string", "title": "メッセージ", "default": ""},
+                                                        "type": { "type": "string", "enum": ["Beacon"], "default": "Beacon" },
+                                                        "message": { "type": "string", "title": "メッセージ", "default": "" },
                                                         "location": {
                                                             "type": "object",
                                                             "title": "座標",
                                                             "properties": {
-                                                                "world": {"type": "string", "title": "ワールド", "default": "world"},
-                                                                "x": {"type": "number", "title": "X", "default": 0},
-                                                                "y": {"type": "number", "title": "Y", "default": 64},
-                                                                "z": {"type": "number", "title": "Z", "default": 0},
-                                                                "yaw": {"type": "number", "title": "Yaw", "default": 0},
-                                                                "pitch": {"type": "number", "title": "Pitch", "default": 0}
+                                                                "world": { "type": "string", "title": "ワールド", "default": "world" },
+                                                                "x": { "type": "number", "title": "X", "default": 0 },
+                                                                "y": { "type": "number", "title": "Y", "default": 64 },
+                                                                "z": { "type": "number", "title": "Z", "default": 0 },
+                                                                "yaw": { "type": "number", "title": "Yaw", "default": 0 },
+                                                                "pitch": { "type": "number", "title": "Pitch", "default": 0 }
                                                             }
                                                         },
-                                                        "hitpoint": {"type": "integer", "title": "HP", "default": 100}
+                                                        "hitpoint": { "type": "integer", "title": "HP", "default": 100 }
                                                     }
                                                 },
                                                 {
                                                     "title": "Extermination",
                                                     "properties": {
-                                                        "type": {"type": "string", "enum": ["Extermination"], "default": "Extermination"},
-                                                        "message": {"type": "string", "title": "メッセージ", "default": ""},
-                                                        "team": {"type": "string", "title": "チーム名"}
+                                                        "type": { "type": "string", "enum": ["Extermination"], "default": "Extermination" },
+                                                        "message": { "type": "string", "title": "メッセージ", "default": "" },
+                                                        "team": { "type": "string", "title": "チーム名" }
                                                     }
                                                 },
                                                 {
                                                     "title": "Ticket",
                                                     "properties": {
-                                                        "type": {"type": "string", "enum": ["Ticket"], "default": "Ticket"},
-                                                        "message": {"type": "string", "title": "メッセージ", "default": ""},
-                                                        "team": {"type": "string", "title": "チーム名"},
-                                                        "count": {"type": "integer", "title": "チケット数", "default": 50}
+                                                        "type": { "type": "string", "enum": ["Ticket"], "default": "Ticket" },
+                                                        "message": { "type": "string", "title": "メッセージ", "default": "" },
+                                                        "team": { "type": "string", "title": "チーム名" },
+                                                        "count": { "type": "integer", "title": "チケット数", "default": 50 }
                                                     }
                                                 }
                                             ]
@@ -749,4 +787,5 @@
         });
     </script>
 </body>
+
 </html>

@@ -109,7 +109,7 @@ public class TeamManager {
 
 ### 3.1 チーム定義
 
-| チーム名 | カラー | 皮装備色（RGB） | 設定 |
+| チーム名 | カラー | 皮アーマーカラー（RGB） | 設定 |
 |---------|-------|----------------|------|
 | `blue` | blue | 255 (0x0000FF) | friendlyFire: false, seeFriendlyInvisibles: true |
 | `green` | green | 32768 (0x008000) | friendlyFire: false, seeFriendlyInvisibles: true |

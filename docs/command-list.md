@@ -144,7 +144,7 @@
 ---
 
 #### `/kcdk config team <team> armorColor <color>`
-チームの革装備色を設定（RGB整数値）
+チームの革アーマーカラーを設定（RGB整数値）
 
 **例:**
 ```
@@ -290,7 +290,7 @@
 ---
 
 #### `/kcdk config team <team> role <role> armorColor <color>`
-ロールの革装備色を設定
+ロールの革アーマーカラーを設定
 
 **例:**
 ```
@@ -300,7 +300,7 @@
 ---
 
 #### `/kcdk config team <team> role <role> armorColor remove`
-ロールの装備色を削除（親チーム継承）
+ロールのアーマーカラーを削除（親チーム継承）
 
 **例:**
 ```

@@ -211,7 +211,7 @@ teams:
 | `teams` | List\<Team\> | チームリスト |
 | `teams[].name` | String | チーム識別名 |
 | `teams[].displayName` | String | チーム表示名 |
-| `teams[].armorColor` | int | 革装備色（RGB） |
+| `teams[].armorColor` | int | 革アーマーカラー（RGB） |
 | `teams[].readyLocation` | Location\|null | 待機地点（null可） |
 | `teams[].respawnLocation` | Location | リスポーン地点 |
 | `teams[].stock` | int | リスポーン回数（負数=無限、0=スペクテイター） |
@@ -220,7 +220,7 @@ teams:
 | `teams[].roles` | List\<Role\> | チーム内ロール（親チームの子として扱われる） |
 | `teams[].roles[].name` | String | ロール識別名 |
 | `teams[].roles[].displayName` | String\|null | ロール表示名（null時は親チーム継承） |
-| `teams[].roles[].armorColor` | int\|null | 革装備色（null時は親チーム継承） |
+| `teams[].roles[].armorColor` | int\|null | 革アーマーカラー（null時は親チーム継承） |
 | `teams[].roles[].readyLocation` | Location\|null | 待機地点（null時は親チーム継承） |
 | `teams[].roles[].respawnLocation` | Location | リスポーン地点 |
 | `teams[].roles[].stock` | int\|null | リスポーン回数（null時は親チーム継承） |
