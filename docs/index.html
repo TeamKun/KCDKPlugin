@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link href="https://cdn.jsdelivr.net/npm/flowbite@4.0.1/dist/flowbite.min.css" rel="stylesheet" />
+    <title>KCDK Config Editor</title>
+</head>
+
+<body>
+    <div class="px-10 py-10 pb-24 md:px-20">
+        <h1 class="mb-10 text-4xl font-extrabold tracking-tight text-gray-900">
+            KCDK Config Editor
+        </h1>
+
+        <div>
+            <h2 class="text-2xl font-bold tracking-tight text-gray-900">
+                基本設定
+            </h2>
+
+            <div class="flex flex-row flex-wrap gap-6">
+                <!-- ===== Card: GameMode ===== -->
+                <div class="flex flex-row py-6">
+                    <div
+                        class="ml-0 w-full max-w-xl rounded-2xl border border-gray-200 bg-white px-6 py-6 shadow-sm md:ml-10">
+                        <div class="relative">
+                            <label for="gamemode" class="mb-2 block text-lg font-semibold tracking-wide text-gray-800">
+                                ゲームモード
+                            </label>
+
+                            <p class="mb-3 text-sm leading-relaxed text-gray-500">
+                                試合中にプレイヤーへ適用されるゲームモードを選択します。
+                            </p>
+
+                            <div class="relative">
+                                <select id="gamemode" name="gamemode" class="block w-full appearance-none rounded-xl border border-gray-300 bg-white px-4 py-3 pr-10
+                    text-base text-gray-800 shadow-sm transition
+                    hover:border-gray-400
+                    focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/20">
+                                    <option value="ADVENTURE">ADVENTURE</option>
+                                    <option value="SURVIVAL">SURVIVAL</option>
+                                </select>
+
+                                <!-- ▼アイコン -->
+                                <div
+                                    class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-gray-400">
+                                    <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2"
+                                        viewBox="0 0 24 24">
+                                        <path d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </div>
+                            </div>
+
+                            <div class="mt-4 flex items-center gap-2">
+                                <span
+                                    class="inline-flex items-center rounded-full bg-indigo-50 px-2.5 py-1 text-xs font-semibold text-indigo-700">
+                                    おすすめ
+                                </span>
+                                <span class="text-xs text-gray-500">
+                                    初心者は ADVENTURE が安心です。
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ===== Card: Bossbar ===== -->
+                <div class="flex flex-row py-6">
+                    <div
+                        class="ml-0 w-full max-w-xl rounded-2xl border border-gray-200 bg-white px-6 py-6 shadow-sm md:ml-10">
+                        <h3 class="mb-4 text-xl font-bold tracking-tight text-gray-900">
+                            ボスバー設定
+                        </h3>
+
+                        <p class="mb-6 text-sm leading-relaxed text-gray-600">
+                            特定のプレイヤーの体力を、画面上部のボスバーとして表示します。
+                        </p>
+
+                        <!-- 無効トグル（peer はここ） -->
+                        <div class="mb-6 flex items-center justify-between">
+                            <label for="bossbar-disable"
+                                class="block text-base font-semibold text-gray-800 cursor-pointer">
+                                ボスバーを無効にする
+                            </label>
+
+                            <label for="bossbar-disable" class="inline-flex cursor-pointer items-center">
+                                <input id="bossbar-disable" name="bossbar-disable" type="checkbox" class="peer sr-only"
+                                    checked />
+
+                                <!-- track -->
+                                <div class="relative h-6 w-11 rounded-full bg-gray-300 transition-colors duration-200
+                            peer-checked:bg-indigo-600
+                            after:absolute after:left-1 after:top-1 after:h-4 after:w-4
+                            after:rounded-full after:bg-white
+                            after:transition-transform after:duration-200
+                            peer-checked:after:translate-x-5">
+                                </div>
+                            </label>
+                        </div>
+
+                        <!-- MCID入力 -->
+                        <div class="mb-4">
+                            <label for="bossbar-mcid" class="mb-2 block text-base font-semibold text-gray-800">
+                                対象プレイヤー（MCID）
+                            </label>
+
+                            <input id="bossbar-mcid" name="bossbar-mcid" type="text" placeholder="例: Steve" class="block w-full rounded-xl border border-gray-300 bg-white px-4 py-2.5
+                  text-gray-800 shadow-sm transition
+                  placeholder:text-gray-400
+                  focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/20" />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ===== Card: TimeLimit ===== -->
+                <div class="flex flex-row py-6">
+                    <div
+                        class="ml-0 w-full max-w-xl rounded-2xl border border-gray-200 bg-white px-6 py-6 shadow-sm md:ml-10">
+                        <h3 class="mb-4 text-xl font-bold tracking-tight text-gray-900">
+                            制限時間
+                        </h3>
+
+                        <p class="mb-6 text-sm leading-relaxed text-gray-600">
+                            試合の制限時間を設定します（時・分・秒）。
+                        </p>
+
+                        <!-- 無効トグル（peer はここ） -->
+                        <div class="mb-6 flex items-center justify-between">
+                            <label for="timelimit-disable"
+                                class="block text-base font-semibold text-gray-800 cursor-pointer">
+                                制限時間を無効にする
+                            </label>
+
+                            <label for="timelimit-disable" class="inline-flex cursor-pointer items-center">
+                                <input id="timelimit-disable" name="timelimit-disable" type="checkbox"
+                                    class="peer sr-only" checked />
+
+                                <!-- track -->
+                                <div class="relative h-6 w-11 rounded-full bg-gray-300 transition-colors duration-200
+                            peer-checked:bg-indigo-600
+                            after:absolute after:left-1 after:top-1 after:h-4 after:w-4
+                            after:rounded-full after:bg-white
+                            after:transition-transform after:duration-200
+                            peer-checked:after:translate-x-5">
+                                </div>
+                            </label>
+                        </div>
+
+                        <!-- 時間入力 (HH MM SS) -->
+                        <div class="mb-2">
+                            <label class="mb-2 block text-base font-semibold text-gray-800">
+                                時間（HH:MM:SS）
+                            </label>
+
+                            <div class="flex items-center gap-3">
+                                <!-- HH -->
+                                <div class="flex-1">
+                                    <div class="relative">
+                                        <input id="timelimit-hours" name="timelimit-hours" type="number"
+                                            inputmode="numeric" min="0" max="99" placeholder="00" disabled
+                                            class="block w-full rounded-xl border border-gray-300 bg-white px-4 py-2.5
+                        text-gray-800 shadow-sm transition
+                        placeholder:text-gray-400
+                        focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/20 opacity-50 cursor-not-allowed bg-gray-100" />
+                                        <span
+                                            class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-sm text-gray-400">
+                                            hh
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <span class="select-none text-gray-400">:</span>
+
+                                <!-- MM -->
+                                <div class="flex-1">
+                                    <div class="relative">
+                                        <input id="timelimit-minutes" name="timelimit-minutes" type="number"
+                                            inputmode="numeric" min="0" max="59" placeholder="00" disabled
+                                            class="block w-full rounded-xl border border-gray-300 bg-white px-4 py-2.5
+                        text-gray-800 shadow-sm transition
+                        placeholder:text-gray-400
+                        focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/20 opacity-50 cursor-not-allowed bg-gray-100" />
+                                        <span
+                                            class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-sm text-gray-400">
+                                            mm
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <span class="select-none text-gray-400">:</span>
+
+                                <!-- SS -->
+                                <div class="flex-1">
+                                    <div class="relative">
+                                        <input id="timelimit-seconds" name="timelimit-seconds" type="number"
+                                            inputmode="numeric" min="0" max="59" placeholder="00" disabled
+                                            class="block w-full rounded-xl border border-gray-300 bg-white px-4 py-2.5
+                        text-gray-800 shadow-sm transition
+                        placeholder:text-gray-400
+                        focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/20 opacity-50 cursor-not-allowed bg-gray-100" />
+                                        <span
+                                            class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-sm text-gray-400">
+                                            ss
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <p class="mt-2 text-sm text-gray-500">
+                                例：1時間30分の場合は <span class="font-semibold">01:30:00</span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+            </div><!-- /flex -->
+        </div>
+
+        <div class="mt-10">
+            <h2 class="text-2xl font-bold tracking-tight text-gray-900">
+                チーム設定
+            </h2>
+
+            <p class="mt-2 text-sm leading-relaxed text-gray-600">
+                試合に参加するチームを設定します。
+            </p>
+
+            <!-- チームカードのコンテナ -->
+            <div id="teams-container" class="mt-6 flex flex-col gap-4">
+                <!-- チーム1 -->
+                <div class="team-card w-full rounded-2xl border border-gray-200 bg-white px-6 py-6 shadow-sm">
+                    <div class="mb-4 flex items-center justify-between">
+                        <h3 class="text-lg font-bold tracking-tight text-gray-900">チーム 1</h3>
+                        <button type="button"
+                            class="delete-team-btn text-gray-400 hover:text-red-500 transition hidden">
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <!-- 基本情報 -->
+                        <div class="space-y-4">
+                            <div>
+                                <label class="mb-2 block text-sm font-semibold text-gray-800">チーム名</label>
+                                <input type="text" name="team-name" placeholder="例: Red Team" value="red"
+                                    class="block w-full rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-gray-800 shadow-sm transition placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/20" />
+                            </div>
+                            <div>
+                                <label class="mb-2 block text-sm font-semibold text-gray-800">表示名</label>
+                                <input type="text" name="team-display-name" placeholder="例: 赤チーム" value="赤チーム"
+                                    class="block w-full rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-gray-800 shadow-sm transition placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/20" />
+                            </div>
+                            <div>
+                                <label class="mb-2 block text-sm font-semibold text-gray-800">チームカラー</label>
+                                <input type="color" name="team-color" value="#ef4444"
+                                    class="h-10 w-full rounded-xl border border-gray-300 cursor-pointer" />
+                            </div>
+                            <div>
+                                <label class="mb-2 block text-sm font-semibold text-gray-800">リスポーン可能回数(-1=無限)</label>
+                                <input type="number" name="team-respawn-count" min="-1" placeholder="-1 = 無限" value="0"
+                                    class="block w-full rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-gray-800 shadow-sm transition placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/20" />
+                            </div>
+                        </div>
+
+                        <!-- 待機地点 -->
+                        <div class="space-y-3 rounded-xl border border-gray-200 bg-gray-50 p-4">
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm font-semibold text-gray-800">待機地点</span>
+                                <label class="inline-flex cursor-pointer items-center gap-2">
+                                    <span class="text-xs text-gray-500">無効</span>
+                                    <input type="checkbox" name="team-lobby-disable"
+                                        class="peer sr-only team-lobby-toggle" />
+                                    <div
+                                        class="relative h-5 w-9 rounded-full bg-gray-300 transition-colors duration-200 peer-checked:bg-indigo-600 after:absolute after:left-0.5 after:top-0.5 after:h-4 after:w-4 after:rounded-full after:bg-white after:transition-transform after:duration-200 peer-checked:after:translate-x-4">
+                                    </div>
+                                </label>
+                            </div>
+                            <div class="team-lobby-fields space-y-2">
+                                <input type="text" name="team-lobby-world" placeholder="world" value="world"
+                                    class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
+                                <div class="grid grid-cols-3 gap-2">
+                                    <input type="number" name="team-lobby-x" placeholder="X" step="0.01" value="0"
+                                        class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
+                                    <input type="number" name="team-lobby-y" placeholder="Y" step="0.01" value="64"
+                                        class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
+                                    <input type="number" name="team-lobby-z" placeholder="Z" step="0.01" value="0"
+                                        class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
+                                </div>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <input type="number" name="team-lobby-yaw" placeholder="Yaw" step="0.1" value="0"
+                                        class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
+                                    <input type="number" name="team-lobby-pitch" placeholder="Pitch" step="0.1"
+                                        value="180"
+                                        class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
+                                </div>
+                                <div>
+                                    <label class="mb-1 block text-xs text-gray-500">待機時間 (HH:MM:SS)</label>
+                                    <div class="grid grid-cols-3 gap-2">
+                                        <input type="number" name="team-lobby-hours" min="0" max="99" placeholder="HH"
+                                            value="0"
+                                            class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
+                                        <input type="number" name="team-lobby-minutes" min="0" max="59" placeholder="MM"
+                                            value="3"
+                                            class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
+                                        <input type="number" name="team-lobby-seconds" min="0" max="59" placeholder="SS"
+                                            value="0"
+                                            class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- リスポーン地点 -->
+                        <div class="space-y-3 rounded-xl border border-gray-200 bg-gray-50 p-4">
+                            <span class="text-sm font-semibold text-gray-800">リスポーン地点</span>
+                            <div class="space-y-2">
+                                <input type="text" name="team-respawn-world" placeholder="world" value="world"
+                                    class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
+                                <div class="grid grid-cols-3 gap-2">
+                                    <input type="number" name="team-respawn-x" placeholder="X" step="0.01" value="0"
+                                        class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
+                                    <input type="number" name="team-respawn-y" placeholder="Y" step="0.01" value="64"
+                                        class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
+                                    <input type="number" name="team-respawn-z" placeholder="Z" step="0.01" value="0"
+                                        class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
+                                </div>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <input type="number" name="team-respawn-yaw" placeholder="Yaw" step="0.1" value="0"
+                                        class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
+                                    <input type="number" name="team-respawn-pitch" placeholder="Pitch" step="0.1"
+                                        value="180"
+                                        class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- エフェクト -->
+                    <div class="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-4">
+                        <span class="block text-sm font-semibold text-gray-800 mb-3">エフェクト</span>
+                        <div class="effects-container flex flex-wrap items-center gap-2">
+                            <!-- エフェクトがここに追加される -->
+                            <button type="button"
+                                class="add-effect-btn flex items-center justify-center w-48 h-42 rounded-lg border-2 border-dashed border-gray-300 text-gray-400 transition hover:border-indigo-400 hover:text-indigo-500">
+                                <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="2"
+                                    viewBox="0 0 24 24">
+                                    <path d="M12 4v16m8-8H4" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <!-- ロール -->
+                    <div class="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-4">
+                        <span class="block text-sm font-semibold text-gray-800 mb-3">ロール</span>
+                        <div class="roles-container flex flex-col gap-2">
+                            <!-- ロールがここに追加される -->
+                            <button type="button"
+                                class="add-role-btn flex items-center justify-center h-20 rounded-lg border-2 border-dashed border-gray-300 text-gray-400 transition hover:border-indigo-400 hover:text-indigo-500">
+                                <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="2"
+                                    viewBox="0 0 24 24">
+                                    <path d="M12 4v16m8-8H4" />
+                                </svg>
+                                <span class="font-semibold">ロールを追加</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- チーム2 -->
+                <div class="team-card w-full rounded-2xl border border-gray-200 bg-white px-6 py-6 shadow-sm">
+                    <div class="mb-4 flex items-center justify-between">
+                        <h3 class="text-lg font-bold tracking-tight text-gray-900">チーム 2</h3>
+                        <button type="button"
+                            class="delete-team-btn text-gray-400 hover:text-red-500 transition hidden">
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <!-- 基本情報 -->
+                        <div class="space-y-4">
+                            <div>
+                                <label class="mb-2 block text-sm font-semibold text-gray-800">チーム名</label>
+                                <input type="text" name="team-name" placeholder="例: Blue Team" value="blue"
+                                    class="block w-full rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-gray-800 shadow-sm transition placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/20" />
+                            </div>
+                            <div>
+                                <label class="mb-2 block text-sm font-semibold text-gray-800">表示名</label>
+                                <input type="text" name="team-display-name" placeholder="例: 青チーム" value="青チーム"
+                                    class="block w-full rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-gray-800 shadow-sm transition placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/20" />
+                            </div>
+                            <div>
+                                <label class="mb-2 block text-sm font-semibold text-gray-800">チームカラー</label>
+                                <input type="color" name="team-color" value="#3b82f6"
+                                    class="h-10 w-full rounded-xl border border-gray-300 cursor-pointer" />
+                            </div>
+                            <div>
+                                <label class="mb-2 block text-sm font-semibold text-gray-800">リスポーン可能回数(-1=無限)</label>
+                                <input type="number" name="team-respawn-count" min="-1" placeholder="-1 = 無限" value="0"
+                                    class="block w-full rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-gray-800 shadow-sm transition placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/20" />
+                            </div>
+                        </div>
+
+                        <!-- 待機地点 -->
+                        <div class="space-y-3 rounded-xl border border-gray-200 bg-gray-50 p-4">
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm font-semibold text-gray-800">待機地点</span>
+                                <label class="inline-flex cursor-pointer items-center gap-2">
+                                    <span class="text-xs text-gray-500">無効</span>
+                                    <input type="checkbox" name="team-lobby-disable"
+                                        class="peer sr-only team-lobby-toggle" />
+                                    <div
+                                        class="relative h-5 w-9 rounded-full bg-gray-300 transition-colors duration-200 peer-checked:bg-indigo-600 after:absolute after:left-0.5 after:top-0.5 after:h-4 after:w-4 after:rounded-full after:bg-white after:transition-transform after:duration-200 peer-checked:after:translate-x-4">
+                                    </div>
+                                </label>
+                            </div>
+                            <div class="team-lobby-fields space-y-2">
+                                <input type="text" name="team-lobby-world" placeholder="world" value="world"
+                                    class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
+                                <div class="grid grid-cols-3 gap-2">
+                                    <input type="number" name="team-lobby-x" placeholder="X" step="0.01" value="0"
+                                        class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
+                                    <input type="number" name="team-lobby-y" placeholder="Y" step="0.01" value="64"
+                                        class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
+                                    <input type="number" name="team-lobby-z" placeholder="Z" step="0.01" value="0"
+                                        class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
+                                </div>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <input type="number" name="team-lobby-yaw" placeholder="Yaw" step="0.1" value="0"
+                                        class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
+                                    <input type="number" name="team-lobby-pitch" placeholder="Pitch" step="0.1"
+                                        value="180"
+                                        class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
+                                </div>
+                                <div>
+                                    <label class="mb-1 block text-xs text-gray-500">待機時間 (HH:MM:SS)</label>
+                                    <div class="grid grid-cols-3 gap-2">
+                                        <input type="number" name="team-lobby-hours" min="0" max="99" placeholder="HH"
+                                            value="0"
+                                            class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
+                                        <input type="number" name="team-lobby-minutes" min="0" max="59" placeholder="MM"
+                                            value="3"
+                                            class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
+                                        <input type="number" name="team-lobby-seconds" min="0" max="59" placeholder="SS"
+                                            value="0"
+                                            class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- リスポーン地点 -->
+                        <div class="space-y-3 rounded-xl border border-gray-200 bg-gray-50 p-4">
+                            <span class="text-sm font-semibold text-gray-800">リスポーン地点</span>
+                            <div class="space-y-2">
+                                <input type="text" name="team-respawn-world" placeholder="world" value="world"
+                                    class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
+                                <div class="grid grid-cols-3 gap-2">
+                                    <input type="number" name="team-respawn-x" placeholder="X" step="0.01" value="0"
+                                        class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
+                                    <input type="number" name="team-respawn-y" placeholder="Y" step="0.01" value="64"
+                                        class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
+                                    <input type="number" name="team-respawn-z" placeholder="Z" step="0.01" value="0"
+                                        class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
+                                </div>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <input type="number" name="team-respawn-yaw" placeholder="Yaw" step="0.1" value="0"
+                                        class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
+                                    <input type="number" name="team-respawn-pitch" placeholder="Pitch" step="0.1"
+                                        value="180"
+                                        class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- エフェクト -->
+                    <div class="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-4">
+                        <span class="block text-sm font-semibold text-gray-800 mb-3">エフェクト</span>
+                        <div class="effects-container flex flex-wrap items-center gap-2">
+                            <!-- エフェクトがここに追加される -->
+                            <button type="button"
+                                class="add-effect-btn flex items-center justify-center w-48 h-42 rounded-lg border-2 border-dashed border-gray-300 text-gray-400 transition hover:border-indigo-400 hover:text-indigo-500">
+                                <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="2"
+                                    viewBox="0 0 24 24">
+                                    <path d="M12 4v16m8-8H4" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <!-- ロール -->
+                    <div class="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-4">
+                        <span class="block text-sm font-semibold text-gray-800 mb-3">ロール</span>
+                        <div class="roles-container flex flex-col gap-2">
+                            <!-- ロールがここに追加される -->
+                            <button type="button"
+                                class="add-role-btn flex items-center justify-center h-20 rounded-lg border-2 border-dashed border-gray-300 text-gray-400 transition hover:border-indigo-400 hover:text-indigo-500">
+                                <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="2"
+                                    viewBox="0 0 24 24">
+                                    <path d="M12 4v16m8-8H4" />
+                                </svg>
+                                <span class="font-semibold">ロールを追加</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- チーム追加ボタン -->
+                <button id="add-team-btn" type="button"
+                    class="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-gray-300 bg-white px-6 py-4 text-gray-500 transition hover:border-indigo-400 hover:text-indigo-600">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M12 4v16m8-8H4" />
+                    </svg>
+                    <span class="font-semibold">チームを追加</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- 終了条件設定 -->
+        <div class="mt-10">
+            <h2 class="text-2xl font-bold tracking-tight text-gray-900">
+                終了条件設定
+            </h2>
+
+            <p class="mt-2 text-sm leading-relaxed text-gray-600">
+                試合の終了条件を設定します。複数設定した場合はOR（いずれか1つ達成で終了）となります。
+            </p>
+
+            <div id="end-conditions-container" class="mt-6 flex flex-col gap-4">
+                <!-- 終了条件カードがここに追加される -->
+
+                <!-- 終了条件追加ボタン -->
+                <button id="add-end-condition-btn" type="button"
+                    class="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-gray-300 bg-white px-6 py-4 text-gray-500 transition hover:border-indigo-400 hover:text-indigo-600">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M12 4v16m8-8H4" />
+                    </svg>
+                    <span class="font-semibold">終了条件を追加</span>
+                </button>
+            </div>
+        </div>
+    </div>
+    <!-- 固定フッターボタン -->
+    <div class="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-sm border-t border-gray-200 py-4 px-6">
+        <div class="flex justify-center gap-4">
+            <button id="quick-setup-btn" type="button"
+                class="flex items-center gap-2 rounded-xl bg-emerald-600 px-6 py-3 text-white font-semibold shadow-lg transition hover:bg-emerald-700 hover:shadow-xl active:scale-95">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                クイック設定
+            </button>
+            <button id="generate-command-btn" type="button"
+                class="flex items-center gap-2 rounded-xl bg-indigo-600 px-6 py-3 text-white font-semibold shadow-lg transition hover:bg-indigo-700 hover:shadow-xl active:scale-95">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                設定用コマンドを生成
+            </button>
+        </div>
+    </div>
+
+    <!-- クイック設定モーダル -->
+    <div id="quick-setup-modal" class="fixed inset-0 z-50 hidden">
+        <!-- オーバーレイ -->
+        <div class="modal-overlay fixed inset-0 bg-black/50 backdrop-blur-sm"></div>
+
+        <!-- モーダルコンテンツ -->
+        <div class="fixed inset-0 flex items-center justify-center p-4">
+            <div class="modal-content relative w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+                <!-- ヘッダー -->
+                <div class="mb-6 flex items-center justify-between">
+                    <h2 class="text-xl font-bold text-gray-900">クイック設定</h2>
+                    <button id="quick-setup-close-btn" type="button"
+                        class="text-gray-400 hover:text-gray-600 transition">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- フォーム -->
+                <div class="space-y-5">
+                    <!-- ゲームルール -->
+                    <div>
+                        <label class="mb-2 block text-sm font-semibold text-gray-800">ゲームルール</label>
+                        <select id="quick-game-rule"
+                            class="block w-full rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-gray-800 shadow-sm transition focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/20">
+                            <option value="captain" selected>大将戦</option>
+                            <option value="team-deathmatch">チームデスマッチ</option>
+                            <option value="beacon-destroy">ビーコン破壊</option>
+                            <option value="ticket">チケット制</option>
+                        </select>
+                    </div>
+
+                    <!-- 大将戦用：守りチーム選択 -->
+                    <div id="quick-captain-options">
+                        <label class="mb-2 block text-sm font-semibold text-gray-800">守りチーム</label>
+                        <div id="quick-captain-team-container" class="flex flex-wrap gap-2">
+                            <label data-team="red">
+                                <input type="checkbox" name="quick-captain-team" value="red" class="peer sr-only"
+                                    checked />
+                                <div
+                                    class="cursor-pointer rounded-lg border-2 border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-600 transition peer-checked:border-red-500 peer-checked:bg-red-50 peer-checked:text-red-600">
+                                    赤
+                                </div>
+                            </label>
+                            <label data-team="blue">
+                                <input type="checkbox" name="quick-captain-team" value="blue" class="peer sr-only" />
+                                <div
+                                    class="cursor-pointer rounded-lg border-2 border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-600 transition peer-checked:border-blue-500 peer-checked:bg-blue-50 peer-checked:text-blue-600">
+                                    青
+                                </div>
+                            </label>
+                            <label data-team="green" class="hidden">
+                                <input type="checkbox" name="quick-captain-team" value="green" class="peer sr-only" />
+                                <div
+                                    class="cursor-pointer rounded-lg border-2 border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-600 transition peer-checked:border-green-500 peer-checked:bg-green-50 peer-checked:text-green-600">
+                                    緑
+                                </div>
+                            </label>
+                            <label data-team="yellow" class="hidden">
+                                <input type="checkbox" name="quick-captain-team" value="yellow" class="peer sr-only" />
+                                <div
+                                    class="cursor-pointer rounded-lg border-2 border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-600 transition peer-checked:border-yellow-500 peer-checked:bg-yellow-50 peer-checked:text-yellow-600">
+                                    黄
+                                </div>
+                            </label>
+                        </div>
+                        <p class="mt-1 text-xs text-gray-500">選択したチームに大将ロールが追加されます</p>
+                    </div>
+
+                    <!-- チーム数 -->
+                    <div>
+                        <label class="mb-2 block text-sm font-semibold text-gray-800">チーム数</label>
+                        <div class="flex gap-3">
+                            <label class="flex-1">
+                                <input type="radio" name="quick-team-count" value="2" class="peer sr-only" checked />
+                                <div
+                                    class="cursor-pointer rounded-xl border-2 border-gray-200 bg-white py-3 text-center font-semibold text-gray-600 transition peer-checked:border-indigo-500 peer-checked:bg-indigo-50 peer-checked:text-indigo-600">
+                                    2チーム
+                                </div>
+                            </label>
+                            <label class="flex-1">
+                                <input type="radio" name="quick-team-count" value="3" class="peer sr-only" />
+                                <div
+                                    class="cursor-pointer rounded-xl border-2 border-gray-200 bg-white py-3 text-center font-semibold text-gray-600 transition peer-checked:border-indigo-500 peer-checked:bg-indigo-50 peer-checked:text-indigo-600">
+                                    3チーム
+                                </div>
+                            </label>
+                            <label class="flex-1">
+                                <input type="radio" name="quick-team-count" value="4" class="peer sr-only" />
+                                <div
+                                    class="cursor-pointer rounded-xl border-2 border-gray-200 bg-white py-3 text-center font-semibold text-gray-600 transition peer-checked:border-indigo-500 peer-checked:bg-indigo-50 peer-checked:text-indigo-600">
+                                    4チーム
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- 制限時間 -->
+                    <div>
+                        <div class="mb-2 flex items-center justify-between">
+                            <label class="text-sm font-semibold text-gray-800">制限時間</label>
+                            <label class="inline-flex cursor-pointer items-center gap-2">
+                                <span class="text-xs text-gray-500">なし</span>
+                                <input type="checkbox" id="quick-timelimit-disable" class="peer sr-only" checked />
+                                <div
+                                    class="relative h-5 w-9 rounded-full bg-gray-300 transition-colors duration-200 peer-checked:bg-indigo-600 after:absolute after:left-0.5 after:top-0.5 after:h-4 after:w-4 after:rounded-full after:bg-white after:transition-transform after:duration-200 peer-checked:after:translate-x-4">
+                                </div>
+                            </label>
+                        </div>
+                        <div id="quick-timelimit-fields" class="flex items-center gap-2">
+                            <input type="number" id="quick-timelimit-minutes" min="1" max="120" value="10"
+                                placeholder="分" disabled
+                                class="block w-full rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-gray-800 shadow-sm transition placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/20 opacity-50 cursor-not-allowed bg-gray-100" />
+                            <span class="text-gray-500">分</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- フッター -->
+                <div class="mt-6 flex gap-3">
+                    <button id="quick-setup-cancel-btn" type="button"
+                        class="flex-1 rounded-xl border border-gray-300 bg-white px-4 py-2.5 font-semibold text-gray-700 transition hover:bg-gray-50">
+                        キャンセル
+                    </button>
+                    <button id="quick-setup-apply-btn" type="button"
+                        class="flex-1 rounded-xl bg-indigo-600 px-4 py-2.5 font-semibold text-white transition hover:bg-indigo-700">
+                        適用する
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- バリデーション警告モーダル -->
+    <div id="validation-warning-modal" class="fixed inset-0 z-50 hidden">
+        <!-- オーバーレイ -->
+        <div class="modal-overlay fixed inset-0 bg-black/50 backdrop-blur-sm"></div>
+
+        <!-- モーダルコンテンツ -->
+        <div class="fixed inset-0 flex items-center justify-center p-4">
+            <div class="modal-content relative w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+                <div class="mb-4 text-center">
+                    <svg class="mx-auto h-16 w-16 text-amber-500" fill="none" stroke="currentColor" stroke-width="1.5"
+                        viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                    </svg>
+                </div>
+                <h3 class="text-lg font-bold text-gray-900 mb-2 text-center">設定が不足しています</h3>
+                <p class="text-sm text-gray-600 mb-4 text-center">以下の項目を確認してください：</p>
+                <div id="validation-error-list"
+                    class="bg-red-50 border border-red-200 rounded-xl p-4 mb-6 max-h-60 overflow-y-auto">
+                    <!-- エラー一覧がここに追加される -->
+                </div>
+                <button id="validation-warning-close-btn" type="button"
+                    class="w-full rounded-xl bg-indigo-600 px-4 py-2.5 font-semibold text-white transition hover:bg-indigo-700">
+                    閉じる
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="config-editor.js"></script>
+</body>
+
+</html>
