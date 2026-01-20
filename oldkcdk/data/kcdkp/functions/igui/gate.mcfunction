@@ -1,0 +1,1 @@
+execute if score igui kcdk.config matches 1 run function kcdkp:igui/player_to_run

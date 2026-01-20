@@ -1,0 +1,1 @@
+execute as @a[team=kcdk.admin] run function kcdkp:igui/control
