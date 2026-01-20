@@ -790,7 +790,7 @@ function createRoleCard() {
                     </label>
                 </div>
                 <div class="role-inherit-field-group space-y-1 opacity-50">
-                    <input type="text" name="role-lobby-world" placeholder="world" class="role-inherit-field block w-full rounded-lg border border-gray-300 bg-gray-100 px-2 py-1 text-xs text-gray-800 placeholder:text-gray-400" disabled />
+                    <input type="text" name="role-lobby-world" placeholder="world" value="world" class="role-inherit-field block w-full rounded-lg border border-gray-300 bg-gray-100 px-2 py-1 text-xs text-gray-800 placeholder:text-gray-400" disabled />
                     <div class="grid grid-cols-3 gap-1">
                         <input type="number" name="role-lobby-x" placeholder="X" step="0.01" class="role-inherit-field block w-full rounded-lg border border-gray-300 bg-gray-100 px-2 py-1 text-xs" disabled />
                         <input type="number" name="role-lobby-y" placeholder="Y" step="0.01" class="role-inherit-field block w-full rounded-lg border border-gray-300 bg-gray-100 px-2 py-1 text-xs" disabled />
@@ -800,6 +800,7 @@ function createRoleCard() {
                         <input type="number" name="role-lobby-yaw" placeholder="Yaw" step="0.1" class="role-inherit-field block w-full rounded-lg border border-gray-300 bg-gray-100 px-2 py-1 text-xs" disabled />
                         <input type="number" name="role-lobby-pitch" placeholder="Pitch" step="0.1" class="role-inherit-field block w-full rounded-lg border border-gray-300 bg-gray-100 px-2 py-1 text-xs" disabled />
                     </div>
+                    <label class="text-xs font-semibold text-gray-600">待機時間</label>
                     <div class="grid grid-cols-3 gap-1">
                         <input type="number" name="role-lobby-hours" min="0" max="99" placeholder="HH" class="role-inherit-field block w-full rounded-lg border border-gray-300 bg-gray-100 px-2 py-1 text-xs" disabled />
                         <input type="number" name="role-lobby-minutes" min="0" max="59" placeholder="MM" class="role-inherit-field block w-full rounded-lg border border-gray-300 bg-gray-100 px-2 py-1 text-xs" disabled />
@@ -818,7 +819,7 @@ function createRoleCard() {
                     </label>
                 </div>
                 <div class="role-inherit-field-group space-y-1 opacity-50">
-                    <input type="text" name="role-respawn-world" placeholder="world" class="role-inherit-field block w-full rounded-lg border border-gray-300 bg-gray-100 px-2 py-1 text-xs text-gray-800 placeholder:text-gray-400" disabled />
+                    <input type="text" name="role-respawn-world" placeholder="world" value="world" class="role-inherit-field block w-full rounded-lg border border-gray-300 bg-gray-100 px-2 py-1 text-xs text-gray-800 placeholder:text-gray-400" disabled />
                     <div class="grid grid-cols-3 gap-1">
                         <input type="number" name="role-respawn-x" placeholder="X" step="0.01" class="role-inherit-field block w-full rounded-lg border border-gray-300 bg-gray-100 px-2 py-1 text-xs" disabled />
                         <input type="number" name="role-respawn-y" placeholder="Y" step="0.01" class="role-inherit-field block w-full rounded-lg border border-gray-300 bg-gray-100 px-2 py-1 text-xs" disabled />
@@ -842,7 +843,7 @@ function createRoleCard() {
                 </div>
                 <div class="role-effects-container flex flex-wrap items-center gap-2">
                     <!-- ロールエフェクトがここに追加される -->
-                    <button type="button" class="add-role-effect-btn flex items-center justify-center w-32 h-30 rounded-lg border-2 border-dashed border-gray-300 text-gray-400 transition hover:border-indigo-400 hover:text-indigo-500">
+                    <button type="button" class="add-role-effect-btn flex items-center justify-center w-36 h-30 rounded-lg border-2 border-dashed border-gray-300 text-gray-400 transition hover:border-indigo-400 hover:text-indigo-500">
                         <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                             <path d="M12 4v16m8-8H4" />
                         </svg>
