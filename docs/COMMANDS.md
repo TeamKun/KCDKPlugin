@@ -65,67 +65,10 @@ KCDKプラグインはこれらの標準コマンドを前提とし、ゲーム�
 
 **実装メソッド:**
 ```java
-public void executeSetup(CommandSender sender)
-```
-
-**成功時メッセージ:**
-```
-kcdk:_setupが実行されました
-```
-
----
-
-### 1.2 `/kcdk setup-format`
-**説明:** フォーマット付きセットアップを実行
-
-**対応function:** `kcdk:_setup_with_formatting`
-
-**権限:** `kcdk.admin`
-
-**構文:**
-```
-/kcdk setup-format
-```
-
-**処理内容:**
-setupに加えて:
-1. デフォルト設定の復元
-   - difficulty normal
-   - time set day
-   - weather clear
-   - worldborder設定
-   - setworldspawn 0 4 0
-2. ゲームルールをデフォルトに戻す
-3. その後、ゲーム用設定を再適用
-
-**実装メソッド:**
-```java
 public void executeSetupWithFormatting(CommandSender sender)
 ```
 
 ---
-
-### 1.3 `/kcdk get`
-**説明:** KCDK構造物ブロックを取得
-
-**対応function:** `kcdk:_get`
-
-**権限:** `kcdk.admin`
-
-**構文:**
-```
-/kcdk get
-```
-
-**処理内容:**
-実行者に構造物ブロック（structure block）を付与
-- 名前: "KCDK 2.2.0"
-- NBT: `{BlockEntityTag:{name:"kcdk:2.2.0",posX:0,posY:1,posZ:0,sizeX:27,sizeY:13,sizeZ:7,mode:"LOAD"}}`
-
-**実装メソッド:**
-```java
-public void executeGet(Player player)
-```
 
 ---
 
@@ -158,28 +101,6 @@ public void executeReset(CommandSender sender)
 **引数型:**
 なし
 
----
-
-### 2.2 `/kcdk exit`
-**説明:** ゲーム終了処理
-
-**対応function:** `kcdk:common/exit`
-
-**権限:** `kcdk.admin`
-
-**構文:**
-```
-/kcdk exit
-```
-
-**処理内容:**
-exitファイル自体が再帰呼び出しのため、実際には何も実行しない
-（データパック設計上の空関数）
-
-**実装メソッド:**
-```java
-public void executeExit(CommandSender sender)
-```
 
 ---
 
