@@ -472,15 +472,24 @@ function createTeamCard(teamNumber) {
                     </label>
                 </div>
                 <div class="team-lobby-fields space-y-2">
-                    <input type="text" name="team-lobby-world" placeholder="world" value="world" class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
-                    <div class="grid grid-cols-3 gap-2">
-                        <input type="number" name="team-lobby-x" placeholder="X" step="0.01" value="0" class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
-                        <input type="number" name="team-lobby-y" placeholder="Y" step="0.01" value="64" class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
-                        <input type="number" name="team-lobby-z" placeholder="Z" step="0.01" value="0" class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
+                    <div>
+                        <label class="mb-1 block text-xs text-gray-500">ワールド</label>
+                        <input type="text" name="team-lobby-world" placeholder="world" value="world" class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
                     </div>
-                    <div class="grid grid-cols-2 gap-2">
-                        <input type="number" name="team-lobby-yaw" placeholder="Yaw" step="0.1" value="0" class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
-                        <input type="number" name="team-lobby-pitch" placeholder="Pitch" step="0.1" value="180" class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
+                    <div>
+                        <label class="mb-1 block text-xs text-gray-500">座標 (X / Y / Z)</label>
+                        <div class="grid grid-cols-3 gap-2">
+                            <input type="number" name="team-lobby-x" placeholder="X" step="0.01" value="0" class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
+                            <input type="number" name="team-lobby-y" placeholder="Y" step="0.01" value="64" class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
+                            <input type="number" name="team-lobby-z" placeholder="Z" step="0.01" value="0" class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
+                        </div>
+                    </div>
+                    <div>
+                        <label class="mb-1 block text-xs text-gray-500">向き (Yaw / Pitch)</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <input type="number" name="team-lobby-yaw" placeholder="Yaw" step="0.1" value="0" class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
+                            <input type="number" name="team-lobby-pitch" placeholder="Pitch" step="0.1" value="180" class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
+                        </div>
                     </div>
                     <div>
                         <label class="mb-1 block text-xs text-gray-500">待機時間 (HH:MM:SS)</label>
@@ -497,15 +506,24 @@ function createTeamCard(teamNumber) {
             <div class="space-y-3 rounded-xl border border-gray-200 bg-gray-50 p-4">
                 <span class="text-sm font-semibold text-gray-800">リスポーン地点</span>
                 <div class="space-y-2">
-                    <input type="text" name="team-respawn-world" placeholder="world" value="world" class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
-                    <div class="grid grid-cols-3 gap-2">
-                        <input type="number" name="team-respawn-x" placeholder="X" step="0.01" value="0" class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
-                        <input type="number" name="team-respawn-y" placeholder="Y" step="0.01" value="64" class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
-                        <input type="number" name="team-respawn-z" placeholder="Z" step="0.01" value="0" class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
+                    <div>
+                        <label class="mb-1 block text-xs text-gray-500">ワールド</label>
+                        <input type="text" name="team-respawn-world" placeholder="world" value="world" class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
                     </div>
-                    <div class="grid grid-cols-2 gap-2">
-                        <input type="number" name="team-respawn-yaw" placeholder="Yaw" step="0.1" value="0" class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
-                        <input type="number" name="team-respawn-pitch" placeholder="Pitch" step="0.1" value="180" class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
+                    <div>
+                        <label class="mb-1 block text-xs text-gray-500">座標 (X / Y / Z)</label>
+                        <div class="grid grid-cols-3 gap-2">
+                            <input type="number" name="team-respawn-x" placeholder="X" step="0.01" value="0" class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
+                            <input type="number" name="team-respawn-y" placeholder="Y" step="0.01" value="64" class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
+                            <input type="number" name="team-respawn-z" placeholder="Z" step="0.01" value="0" class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
+                        </div>
+                    </div>
+                    <div>
+                        <label class="mb-1 block text-xs text-gray-500">向き (Yaw / Pitch)</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <input type="number" name="team-respawn-yaw" placeholder="Yaw" step="0.1" value="0" class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
+                            <input type="number" name="team-respawn-pitch" placeholder="Pitch" step="0.1" value="180" class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1399,11 +1417,12 @@ function applyQuickSetup() {
     const timeLimit = document.getElementById('quick-timelimit-minutes').value;
 
     // 大将戦の場合、守りチームを取得
-    const captainTeams = [];
+    let captainTeam = null;
     if (gameRule === 'captain') {
-        document.querySelectorAll('input[name="quick-captain-team"]:checked').forEach(cb => {
-            captainTeams.push(cb.value);
-        });
+        const selectedRadio = document.querySelector('input[name="quick-captain-team"]:checked');
+        if (selectedRadio) {
+            captainTeam = selectedRadio.value;
+        }
     }
 
     // テンプレートを取得
@@ -1471,7 +1490,7 @@ function applyQuickSetup() {
 
             // リスポーン回数とロール設定（ルールによる）
             if (gameRule === 'captain') {
-                const isCaptainTeam = captainTeams.includes(preset.name);
+                const isCaptainTeam = captainTeam === preset.name;
                 if (isCaptainTeam) {
                     // 守りチーム: リスポーン0、大将ロール追加
                     if (respawnInput) respawnInput.value = template.defenseRespawnCount;
@@ -1502,14 +1521,11 @@ function applyQuickSetup() {
         // 既存の終了条件カードを削除
         endConditionsContainer.querySelectorAll('.end-condition-card').forEach(card => card.remove());
 
-        if (gameRule === 'captain') {
-            // 大将戦: 守りチームの大将（captain）全滅条件のみ作成
-            let conditionIndex = 1;
-            captainTeams.forEach(teamName => {
-                const preset = teamPresets.find(p => p.name === teamName);
-                if (!preset) return;
-
-                const conditionCard = createEndConditionCard(conditionIndex);
+        if (gameRule === 'captain' && captainTeam) {
+            // 大将戦: 守りチームの大将（captain）全滅条件を作成
+            const preset = teamPresets.find(p => p.name === captainTeam);
+            if (preset) {
+                const conditionCard = createEndConditionCard(1);
                 addEndConditionBtn.before(conditionCard);
 
                 const typeSelect = conditionCard.querySelector('.end-condition-type-select');
@@ -1521,9 +1537,7 @@ function applyQuickSetup() {
                 // チーム名.captain を設定
                 const extTeamInput = conditionCard.querySelector('input[name="extermination-team"]');
                 if (extTeamInput) extTeamInput.value = `${preset.name}.captain`;
-
-                conditionIndex++;
-            });
+            }
         } else {
             // 通常ルール: チーム数分の終了条件を作成
             for (let i = 0; i < teamCount; i++) {
@@ -1558,7 +1572,7 @@ function applyQuickSetup() {
         }
     }
 
-    console.log('クイック設定を適用しました:', { gameRule, teamCount, timeLimitDisabled, timeLimit, captainTeams });
+    console.log('クイック設定を適用しました:', { gameRule, teamCount, timeLimitDisabled, timeLimit, captainTeam });
 }
 
 // 大将ロールを追加
