@@ -1,8 +1,12 @@
 package net.kunmc.lab.app.command.subcommand;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonSyntaxException;
 import net.kunmc.lab.app.Store;
 import net.kunmc.lab.app.command.KCDKCommand;
 import net.kunmc.lab.app.command.SubCommand;
+import net.kunmc.lab.app.config.EndConditionDeserializer;
 import net.kunmc.lab.app.config.data.*;
 import net.kunmc.lab.app.config.data.endcondition.*;
 import org.bukkit.Bukkit;
@@ -39,6 +43,9 @@ public class ConfigCommand implements SubCommand {
 
             case "reload":
                 return handleReload(sender);
+
+            case "import":
+                return handleImport(sender, args);
         }
 
         // gamemode
@@ -112,6 +119,49 @@ public class ConfigCommand implements SubCommand {
             sender.sendMessage("§cFailed to reload configuration: " + e.getMessage());
             e.printStackTrace();
         }
+        return true;
+    }
+
+    private boolean handleImport(CommandSender sender, String[] args) {
+        if (args.length < 2) {
+            sender.sendMessage("§cUsage: /kcdk config import <json>");
+            return true;
+        }
+
+        // 全ての引数を結合してJSONとして扱う
+        String json = String.join(" ", Arrays.copyOfRange(args, 1, args.length));
+
+        try {
+            // GsonでGameConfigをデシリアライズ
+            Gson gson = new GsonBuilder()
+                    .setPrettyPrinting()
+                    .registerTypeAdapter(EndCondition.class, new EndConditionDeserializer())
+                    .create();
+
+            GameConfig importedConfig = gson.fromJson(json, GameConfig.class);
+
+            if (importedConfig == null) {
+                sender.sendMessage("§cFailed to parse JSON: result is null");
+                return true;
+            }
+
+            // 現在の設定を置き換え
+            Store.config.setGameConfig(importedConfig);
+
+            // YAMLに保存
+            Store.config.saveGameConfig();
+
+            sender.sendMessage("§aConfiguration imported from JSON successfully");
+            sender.sendMessage("§eTeams imported: §f" + importedConfig.getTeams().size());
+            sender.sendMessage("§eEnd conditions imported: §f" + importedConfig.getEndConditions().size());
+
+        } catch (JsonSyntaxException e) {
+            sender.sendMessage("§cInvalid JSON format: " + e.getMessage());
+        } catch (Exception e) {
+            sender.sendMessage("§cFailed to import configuration: " + e.getMessage());
+            e.printStackTrace();
+        }
+
         return true;
     }
 
@@ -805,7 +855,7 @@ public class ConfigCommand implements SubCommand {
     public List<String> tabComplete(CommandSender sender, String[] args) {
         if (args.length == 1) {
             return KCDKCommand.filterStartingWith(args[0], Arrays.asList(
-                    "gamemode", "showBossBar", "timeLimit", "team", "endCondition", "show", "save", "reload"
+                    "gamemode", "showBossBar", "timeLimit", "team", "endCondition", "show", "save", "reload", "import"
             ));
         }
 

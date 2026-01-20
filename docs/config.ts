@@ -5,7 +5,7 @@ interface Config {
     teams: Team[]
     gamemode: String
     showBossBar: boolean
-    EndCondition: EndCondition[]
+    endConditions: EndCondition[]
 }
 
 interface Time {
@@ -53,8 +53,11 @@ interface EndCondition {
 }
 
 interface CompositEndCondition extends EndCondition {
-    condition: EndCondition[]
+    conditions: EndCondition[]
+    condition: condition
 }
+
+type condition = "OR" | "AND"
 
 interface Effect {
     name:String

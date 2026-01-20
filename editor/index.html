@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KCDK Config Editor</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@json-editor/json-editor@latest/dist/jsoneditor.min.js"></script>
+    <style>
+        body {
+            padding: 15px;
+            background-color: #f8f9fa;
+            font-size: 14px;
+        }
+        .container {
+            max-width: 1400px;
+            background: white;
+            padding: 20px;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 24px;
+        }
+        .text-muted {
+            font-size: 13px;
+            margin-bottom: 15px;
+        }
+        #editor_holder {
+            margin-bottom: 15px;
+        }
+        /* コンパクトなフォーム要素 */
+        .json-editor-container {
+            font-size: 13px;
+        }
+        input[type="text"],
+        input[type="number"],
+        select {
+            padding: 4px 8px !important;
+            font-size: 13px !important;
+            height: 28px !important;
+        }
+        .form-control {
+            padding: 4px 8px !important;
+            font-size: 13px !important;
+        }
+        label {
+            font-size: 13px !important;
+            margin-bottom: 3px !important;
+            font-weight: 500;
+        }
+        .form-group {
+            margin-bottom: 10px !important;
+        }
+        /* ヘッダーをコンパクトに */
+        h3, h4, h5 {
+            font-size: 15px !important;
+            margin: 8px 0 !important;
+            font-weight: 600;
+        }
+        .alert {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            z-index: 9999;
+            min-width: 250px;
+            font-size: 13px;
+        }
+        .footer-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 15px;
+            position: sticky;
+            bottom: 0;
+            background: white;
+            padding: 10px 0;
+            border-top: 1px solid #dee2e6;
+        }
+        .footer-buttons button {
+            flex: 1;
+            padding: 10px 15px !important;
+            font-size: 14px !important;
+        }
+        /* ボタン全般をコンパクトに */
+        button, .btn {
+            padding: 4px 10px !important;
+            font-size: 13px !important;
+            line-height: 1.4;
+        }
+        /* 配列操作ボタン */
+        .json-editor-btn-add,
+        .json-editor-btn-delete,
+        .json-editor-btn-moveup,
+        .json-editor-btn-movedown {
+            padding: 3px 8px !important;
+            font-size: 12px !important;
+            margin: 0 2px;
+        }
+        /* 配列の最後の要素を削除するボタンを非表示 */
+        .json-editor-btntype-deletelast {
+            display: none !important;
+        }
+        /* null許容フィールドのスタイル改善 */
+        .json-editor-btntype-delete {
+            background-color: #dc3545 !important;
+            border-color: #dc3545 !important;
+            color: white !important;
+        }
+        .json-editor-btntype-add {
+            background-color: #28a745 !important;
+            border-color: #28a745 !important;
+            color: white !important;
+        }
+        /* nullフィールドの表示を改善 */
+        .json-editor-btn-delete::before {
+            content: "❌ ";
+        }
+        .json-editor-btn-add::before {
+            content: "➕ ";
+        }
+        /* アコーディオンの開閉ボタンを矢印に変更 */
+        .json-editor-btntype-toggle {
+            font-size: 0 !important;
+            min-width: 24px !important;
+            padding: 4px 8px !important;
+        }
+        .json-editor-btntype-toggle::before {
+            content: "▼";
+            font-size: 13px;
+            display: inline-block;
+            transition: transform 0.2s;
+        }
+        .json-editor-btntype-toggle.collapsed::before {
+            content: "▶";
+        }
+        /* カード風のセクション */
+        .card {
+            margin-bottom: 10px !important;
+        }
+        .card-body {
+            padding: 12px !important;
+        }
+        /* 配列アイテムのヘッダー */
+        .row {
+            margin-bottom: 8px !important;
+        }
+        /* グリッド表示を改善 */
+        .col-md-2, .col-md-3, .col-md-4, .col-md-6 {
+            padding-left: 5px !important;
+            padding-right: 5px !important;
+        }
+        /* 階層ごとに背景色を交互に変える */
+        /* レベル1: teams, endConditions配列のアイテム */
+        [data-schemapath^="root.teams."],
+        [data-schemapath^="root.endConditions."] {
+            background-color: #f0f4f8 !important;
+            padding: 10px !important;
+            margin-bottom: 8px !important;
+            border-radius: 4px !important;
+        }
+        /* レベル2: roles, effects, conditions配列のアイテム */
+        [data-schemapath*=".roles."],
+        [data-schemapath*=".effects."],
+        [data-schemapath*=".conditions."] {
+            background-color: #e1e8ed !important;
+            padding: 8px !important;
+            margin-bottom: 6px !important;
+            border-radius: 4px !important;
+        }
+        /* レベル3以降はさらに濃く */
+        [data-schemapath*=".roles."] [data-schemapath*=".effects."],
+        [data-schemapath*=".conditions."] [data-schemapath*=".location"],
+        [data-schemapath*=".readyLocation"],
+        [data-schemapath*=".respawnLocation"] {
+            background-color: #d3dce6 !important;
+            padding: 8px !important;
+            border-radius: 3px !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 KCDK Configuration Editor</h1>
+        <p class="text-muted">Minecraft PvPゲーム設定エディター - 設定を編集してコマンドをコピーできます</p>
+
+        <div id="editor_holder"></div>
+
+        <div class="footer-buttons">
+            <button id="copy-json" class="btn btn-primary btn-lg">
+                📋 JSONをコピー
+            </button>
+            <button id="share-url" class="btn btn-secondary btn-lg">
+                🔗 共有URLをコピー
+            </button>
+            <button id="reset-config" class="btn btn-warning btn-lg">
+                🔄 デフォルトに戻す
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // デフォルト設定
+        const defaultConfig = {
+            "configVersion": 1,
+            "gamemode": "adventure",
+            "showBossBar": true,
+            "timeLimit": {
+                "hour": 0,
+                "minutes": 10,
+                "second": 0
+            },
+            "teams": [
+                {
+                    "name": "blue",
+                    "displayName": "§9青チーム",
+                    "armorColor": 255,
+                    "readyLocation": {
+                        "world": "world",
+                        "x": 0.0,
+                        "y": 64.0,
+                        "z": 0.0,
+                        "yaw": 0.0,
+                        "pitch": 0.0
+                    },
+                    "respawnLocation": {
+                        "world": "world",
+                        "x": 0.0,
+                        "y": 64.0,
+                        "z": 0.0,
+                        "yaw": 0.0,
+                        "pitch": 0.0
+                    },
+                    "stock": -1,
+                    "waitingTime": {
+                        "hour": 0,
+                        "minutes": 0,
+                        "second": 30
+                    },
+                    "effects": [],
+                    "roles": []
+                },
+                {
+                    "name": "red",
+                    "displayName": "§c赤チーム",
+                    "armorColor": 16711680,
+                    "readyLocation": {
+                        "world": "world",
+                        "x": 100.0,
+                        "y": 64.0,
+                        "z": 0.0,
+                        "yaw": 180.0,
+                        "pitch": 0.0
+                    },
+                    "respawnLocation": {
+                        "world": "world",
+                        "x": 100.0,
+                        "y": 64.0,
+                        "z": 0.0,
+                        "yaw": 180.0,
+                        "pitch": 0.0
+                    },
+                    "stock": -1,
+                    "waitingTime": {
+                        "hour": 0,
+                        "minutes": 0,
+                        "second": 30
+                    },
+                    "effects": [],
+                    "roles": [
+                        {
+                            "name": "captain",
+                            "displayName": "§e大将",
+                            "armorColor": null,
+                            "readyLocation": null,
+                            "respawnLocation": {
+                                "world": "world",
+                                "x": 110.0,
+                                "y": 64.0,
+                                "z": 0.0,
+                                "yaw": 180.0,
+                                "pitch": 0.0
+                            },
+                            "stock": null,
+                            "waitingTime": null,
+                            "effects": [
+                                {
+                                    "name": "SPEED",
+                                    "second": 999999,
+                                    "amplifier": 1,
+                                    "hideParticles": false
+                                },
+                                {
+                                    "name": "STRENGTH",
+                                    "second": 999999,
+                                    "amplifier": 0,
+                                    "hideParticles": false
+                                }
+                            ],
+                            "extendsEffects": true,
+                            "extendsItem": true
+                        }
+                    ]
+                }
+            ],
+            "endConditions": [
+                {
+                    "type": "Beacon",
+                    "message": "§cビーコンが破壊された！",
+                    "location": {
+                        "world": "world",
+                        "x": 0.0,
+                        "y": 64.0,
+                        "z": 0.0,
+                        "yaw": 0.0,
+                        "pitch": 0.0
+                    },
+                    "hitpoint": 100
+                },
+                {
+                    "type": "Extermination",
+                    "message": "§4全滅！",
+                    "team": "blue"
+                },
+                {
+                    "type": "Composite",
+                    "message": "§6ビーコン破壊 & チケット消費で勝利！",
+                    "conditions": [
+                        {
+                            "type": "Beacon",
+                            "message": "",
+                            "location": {
+                                "world": "world",
+                                "x": 100.0,
+                                "y": 64.0,
+                                "z": 0.0,
+                                "yaw": 0.0,
+                                "pitch": 0.0
+                            },
+                            "hitpoint": 50
+                        },
+                        {
+                            "type": "Ticket",
+                            "message": "",
+                            "team": "red",
+                            "count": 30
+                        }
+                    ]
+                }
+            ]
+        };
+
+        // JSONスキーマ定義
+        const schema = {
+            "title": "KCDK Configuration",
+            "type": "object",
+            "required": ["configVersion", "gamemode", "showBossBar", "teams", "endConditions"],
+            "properties": {
+                "configVersion": {
+                    "type": "integer",
+                    "title": "Config Version",
+                    "default": 1
+                },
+                "gamemode": {
+                    "type": "string",
+                    "title": "ゲームモード",
+                    "enum": ["survival", "adventure", "creative", "spectator"],
+                    "default": "survival"
+                },
+                "showBossBar": {
+                    "type": "boolean",
+                    "title": "ボスバー表示",
+                    "description": "ゲーム中にボスバーを表示するか",
+                    "default": true
+                },
+                "timeLimit": {
+                    "title": "時間制限",
+                    "type": "object",
+                    "description": "nullの場合、時間制限なしになります",
+                    "required": ["hour", "gamemode", "minutes", "second"],
+                    "properties": {
+                        "hour": {
+                            "type": "integer",
+                            "title": "時間",
+                            "default": 0
+                        },
+                        "minutes": {
+                            "type": "integer",
+                            "title": "分",
+                            "default": 10
+                        },
+                        "second": {
+                            "type": "integer",
+                            "title": "秒",
+                            "default": 0
+                        }
+                    }
+                },
+                "teams": {
+                    "type": "array",
+                    "title": "チーム",
+                    "items": {
+                        "type": "object",
+                        "title": "チーム",
+                        "required": ["name", "displayName", "armorColor", "respawnLocation", "stock", "waitingTime", "effects", "roles"],
+                        "properties": {
+                            "name": {
+                                "type": "string",
+                                "title": "チーム名"
+                            },
+                            "displayName": {
+                                "type": "string",
+                                "title": "表示名"
+                            },
+                            "armorColor": {
+                                "type": "integer",
+                                "title": "装備色（RGB）"
+                            },
+                            "readyLocation": {
+                                "title": "待機地点",
+                                "type": "object",
+                                "required": ["world", "x", "y","z","yaw","pitch"],
+                                "description": "nullの場合、待機地点なしで開始時にrespawnLocationへ直接テレポートします",
+                                "properties": {
+                                    "world": {"type": "string", "title": "ワールド"},
+                                    "x": {"type": "number", "title": "X座標"},
+                                    "y": {"type": "number", "title": "Y座標"},
+                                    "z": {"type": "number", "title": "Z座標"},
+                                    "yaw": {"type": "number", "title": "Yaw"},
+                                    "pitch": {"type": "number", "title": "Pitch"}
+                                }
+                            },
+                            "respawnLocation": {
+                                "type": "object",
+                                "title": "リスポーン地点（必須）",
+                                "required": ["world", "x", "y","z","yaw","pitch"],
+                                "properties": {
+                                    "world": {"type": "string", "title": "ワールド"},
+                                    "x": {"type": "number", "title": "X座標"},
+                                    "y": {"type": "number", "title": "Y座標"},
+                                    "z": {"type": "number", "title": "Z座標"},
+                                    "yaw": {"type": "number", "title": "Yaw"},
+                                    "pitch": {"type": "number", "title": "Pitch"}
+                                }
+                            },
+                            "stock": {
+                                "type": "integer",
+                                "title": "リスポーン回数（-1=無限）"
+                            },
+                            "waitingTime": {
+                                "type": "object",
+                                "title": "待機時間",
+                                "required": ["hour", "minutes", "second"],
+                                "properties": {
+                                    "hour": {"type": "integer", "title": "時間"},
+                                    "minutes": {"type": "integer", "title": "分"},
+                                    "second": {"type": "integer", "title": "秒"}
+                                }
+                            },
+                            "effects": {
+                                "type": "array",
+                                "title": "エフェクト",
+                                "items": {
+                                    "type": "object",
+                                    "title": " ",
+                                    "required": ["name", "second", "amplifier", "hideParticles"],
+                                    "properties": {
+                                        "name": {"type": "string", "title": "エフェクト名"},
+                                        "second": {"type": "integer", "title": "持続時間（秒）"},
+                                        "amplifier": {"type": "integer", "title": "レベル"},
+                                        "hideParticles": {"type": "boolean", "title": "パーティクル非表示"}
+                                    }
+                                }
+                            },
+                            "roles": {
+                                "type": "array",
+                                "title": "ロール",
+                                "items": {
+                                    "type": "object",
+                                    "title": " ",
+                                    "required": ["name", "respawnLocation", "effects", "extendsEffects", "extendsItem"],
+                                    "properties": {
+                                        "name": {"type": "string", "title": "ロール名"},
+                                        "displayName": {
+                                            "type": ["string", "null"],
+                                            "title": "表示名",
+                                            "description": "nullの場合は親チームの表示名を継承します"
+                                        },
+                                        "armorColor": {
+                                            "type": ["integer", "null"],
+                                            "title": "装備色",
+                                            "description": "nullの場合は親チームの装備色を継承します"
+                                        },
+                                        "readyLocation": {
+                                            "type": ["object", "null"],
+                                            "title": "待機地点",
+                                            "description": "nullの場合は親チームの待機地点を継承します",
+                                            "properties": {
+                                                "world": {"type": "string", "title": "ワールド"},
+                                                "x": {"type": "number", "title": "X"},
+                                                "y": {"type": "number", "title": "Y"},
+                                                "z": {"type": "number", "title": "Z"},
+                                                "yaw": {"type": "number", "title": "Yaw"},
+                                                "pitch": {"type": "number", "title": "Pitch"}
+                                            }
+                                        },
+                                        "respawnLocation": {
+                                            "type": "object",
+                                            "title": "リスポーン地点（必須）",
+                                            "properties": {
+                                                "world": {"type": "string", "title": "ワールド"},
+                                                "x": {"type": "number", "title": "X"},
+                                                "y": {"type": "number", "title": "Y"},
+                                                "z": {"type": "number", "title": "Z"},
+                                                "yaw": {"type": "number", "title": "Yaw"},
+                                                "pitch": {"type": "number", "title": "Pitch"}
+                                            }
+                                        },
+                                        "stock": {
+                                            "type": ["integer", "null"],
+                                            "title": "リスポーン回数",
+                                            "description": "nullの場合は親チームのリスポーン回数を継承します"
+                                        },
+                                        "waitingTime": {
+                                            "type": ["object", "null"],
+                                            "title": "待機時間",
+                                            "description": "nullの場合は親チームの待機時間を継承します",
+                                            "properties": {
+                                                "hour": {"type": "integer", "title": "時間"},
+                                                "minutes": {"type": "integer", "title": "分"},
+                                                "second": {"type": "integer", "title": "秒"}
+                                            }
+                                        },
+                                        "effects": {
+                                            "type": "array",
+                                            "title": "エフェクト",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "name": {"type": "string", "title": "エフェクト名"},
+                                                    "second": {"type": "integer", "title": "持続時間"},
+                                                    "amplifier": {"type": "integer", "title": "レベル"},
+                                                    "hideParticles": {"type": "boolean", "title": "パーティクル非表示"}
+                                                }
+                                            }
+                                        },
+                                        "extendsEffects": {"type": "boolean", "title": "親チームのエフェクトを継承"},
+                                        "extendsItem": {"type": "boolean", "title": "親チームのアイテムを継承"}
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "endConditions": {
+                    "type": "array",
+                    "title": "終了条件（OR）",
+                    "description": "配列内の条件はOR（いずれか1つ達成で終了）",
+                    "items": {
+                        "type": "object",
+                        "title": "終了条件",
+                        "oneOf": [
+                            {
+                                "title": "Beacon（ビーコン破壊）",
+                                "required": ["type", "message", "location","hitpoint"],
+                                "properties": {
+                                    "type": {"type": "string", "enum": ["Beacon"], "default": "Beacon"},
+                                    "message": {"type": "string", "title": "メッセージ", "default": "§cビーコンが破壊された！"},
+                                    "location": {
+                                        "type": "object",
+                                        "title": "座標",
+                                        "required": ["world", "x", "y","z","yaw","pitch"],
+                                        "properties": {
+                                            "world": {"type": "string", "title": "ワールド", "default": "world"},
+                                            "x": {"type": "number", "title": "X", "default": 0},
+                                            "y": {"type": "number", "title": "Y", "default": 64},
+                                            "z": {"type": "number", "title": "Z", "default": 0},
+                                            "yaw": {"type": "number", "title": "Yaw", "default": 0},
+                                            "pitch": {"type": "number", "title": "Pitch", "default": 0}
+                                        }
+                                    },
+                                    "hitpoint": {"type": "integer", "title": "HP", "default": 100}
+                                }
+                            },
+                            {
+                                "title": "Extermination（全滅）",
+                                "required": ["type", "message", "team"],
+                                "properties": {
+                                    "type": {"type": "string", "enum": ["Extermination"], "default": "Extermination"},
+                                    "message": {"type": "string", "title": "メッセージ", "default": "§4全滅！"},
+                                    "team": {"type": "string", "title": "チーム名"}
+                                }
+                            },
+                            {
+                                "title": "Ticket（チケット）",
+                                "properties": {
+                                    "type": {"type": "string", "enum": ["Ticket"], "default": "Ticket"},
+                                    "message": {"type": "string", "title": "メッセージ", "default": "§6チケットが尽きた！"},
+                                    "team": {"type": "string", "title": "チーム名"},
+                                    "count": {"type": "integer", "title": "チケット数", "default": 50}
+                                }
+                            },
+                            {
+                                "title": "Composite（複合条件 - AND）",
+                                "description": "複数の条件をすべて達成で判定",
+                                "properties": {
+                                    "type": {"type": "string", "enum": ["Composite"], "default": "Composite"},
+                                    "message": {"type": "string", "title": "メッセージ", "default": "§a条件達成！"},
+                                    "conditions": {
+                                        "type": "array",
+                                        "title": "条件リスト",
+                                        "description": "判定する条件のリスト",
+                                        "items": {
+                                            "type": "object",
+                                            "oneOf": [
+                                                {
+                                                    "title": "Beacon",
+                                                    "properties": {
+                                                        "type": {"type": "string", "enum": ["Beacon"], "default": "Beacon"},
+                                                        "message": {"type": "string", "title": "メッセージ", "default": ""},
+                                                        "location": {
+                                                            "type": "object",
+                                                            "title": "座標",
+                                                            "properties": {
+                                                                "world": {"type": "string", "title": "ワールド", "default": "world"},
+                                                                "x": {"type": "number", "title": "X", "default": 0},
+                                                                "y": {"type": "number", "title": "Y", "default": 64},
+                                                                "z": {"type": "number", "title": "Z", "default": 0},
+                                                                "yaw": {"type": "number", "title": "Yaw", "default": 0},
+                                                                "pitch": {"type": "number", "title": "Pitch", "default": 0}
+                                                            }
+                                                        },
+                                                        "hitpoint": {"type": "integer", "title": "HP", "default": 100}
+                                                    }
+                                                },
+                                                {
+                                                    "title": "Extermination",
+                                                    "properties": {
+                                                        "type": {"type": "string", "enum": ["Extermination"], "default": "Extermination"},
+                                                        "message": {"type": "string", "title": "メッセージ", "default": ""},
+                                                        "team": {"type": "string", "title": "チーム名"}
+                                                    }
+                                                },
+                                                {
+                                                    "title": "Ticket",
+                                                    "properties": {
+                                                        "type": {"type": "string", "enum": ["Ticket"], "default": "Ticket"},
+                                                        "message": {"type": "string", "title": "メッセージ", "default": ""},
+                                                        "team": {"type": "string", "title": "チーム名"},
+                                                        "count": {"type": "integer", "title": "チケット数", "default": 50}
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                }
+            }
+        };
+
+        // URLクエリパラメータから設定を取得
+        function getConfigFromURL() {
+            const params = new URLSearchParams(window.location.search);
+            const configParam = params.get('config');
+
+            if (configParam) {
+                try {
+                    return JSON.parse(decodeURIComponent(configParam));
+                } catch (e) {
+                    console.error('Failed to parse config from URL:', e);
+                    showAlert('URLからの設定読み込みに失敗しました', 'danger');
+                }
+            }
+
+            return defaultConfig;
+        }
+
+        // エディター初期化
+        const initialConfig = getConfigFromURL();
+        const editor = new JSONEditor(document.getElementById('editor_holder'), {
+            schema: schema,
+            theme: 'bootstrap5',
+            iconlib: 'fontawesome5',
+            disable_collapse: false,
+            disable_edit_json: true,
+            disable_properties: true,
+            startval: initialConfig,
+            // null許容フィールドの設定
+            show_opt_in: true,
+            // null値を持つフィールドは削除ボタンで切り替え可能に
+            no_additional_properties: false,
+            // コンパクトな表示
+            object_layout: 'normal'
+        });
+
+        // アラート表示
+        function showAlert(message, type = 'success') {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.body.appendChild(alertDiv);
+
+            setTimeout(() => {
+                alertDiv.remove();
+            }, 3000);
+        }
+
+        // JSONコピー
+        document.getElementById('copy-json').addEventListener('click', () => {
+            const config = editor.getValue();
+            const json = JSON.stringify(config);
+
+            navigator.clipboard.writeText(json).then(() => {
+                showAlert('✅ JSONをクリップボードにコピーしました！<br>Minecraftで <code>/kcdk config import &lt;JSON&gt;</code> を実行してください');
+            }).catch(err => {
+                showAlert('❌ コピーに失敗しました: ' + err, 'danger');
+            });
+        });
+
+        // 共有URLコピー
+        document.getElementById('share-url').addEventListener('click', () => {
+            const config = editor.getValue();
+            const json = JSON.stringify(config);
+            const url = `${window.location.origin}${window.location.pathname}?config=${encodeURIComponent(json)}`;
+
+            navigator.clipboard.writeText(url).then(() => {
+                showAlert('✅ 共有URLをクリップボードにコピーしました！');
+                // URLを更新（ページはリロードしない）
+                window.history.pushState({}, '', url);
+            }).catch(err => {
+                showAlert('❌ コピーに失敗しました: ' + err, 'danger');
+            });
+        });
+
+        // リセット
+        document.getElementById('reset-config').addEventListener('click', () => {
+            if (confirm('設定をデフォルトに戻しますか？')) {
+                editor.setValue(defaultConfig);
+                window.history.pushState({}, '', window.location.pathname);
+                showAlert('🔄 設定をデフォルトに戻しました', 'info');
+            }
+        });
+    </script>
+</body>
+</html>

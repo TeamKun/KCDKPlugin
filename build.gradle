@@ -31,6 +31,7 @@ repositories {
 
 dependencies {
     compileOnly "org.spigotmc:spigot-api:1.21.5-R0.1-SNAPSHOT"
+    implementation "com.google.code.gson:gson:2.10.1"
 }
 
 def targetJavaVersion = 21
@@ -65,6 +66,7 @@ shadowJar {
     archiveFileName = "${rootProject.name}-${project.version}.jar"
     relocate "net.kunmc.lab.commandlib", "${project.group}.${project.name.toLowerCase()}.commandlib"
     relocate "net.kunmc.lab.configlib", "${project.group}.${project.name.toLowerCase()}.configlib"
+    relocate "com.google.gson", "${project.group}.${project.name.toLowerCase()}.gson"
 }
 tasks.build.dependsOn tasks.shadowJar
 
