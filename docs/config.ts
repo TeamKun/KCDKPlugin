@@ -1,46 +1,42 @@
-
-
 interface Config {
+    gamemode: Gamemode
+    bossbar: Bossbar | null
     timeLimit: Time | null
+    startupCommands: string[]
+    shutdownCommands: string[]
     teams: Team[]
-    gamemode: String
-    showBossBar: boolean
     endConditions: EndCondition[]
 }
 
+type Gamemode = "ADVENTURE" | "SURVIVAL"
+
+interface Bossbar {
+    mcid: string
+}
+
 interface Time {
-    hour: number
+    hours: number
     minutes: number
-    second: number
+    seconds: number
 }
 
 interface Team {
-    name: String
-    displayName: String
-    armorColor: number
-    readyLocation: Location | null
+    name: string
+    displayName: string
+    armorColor: string
+    respawnCount: number
+    readyLocation: ReadyLocation | null
     respawnLocation: Location
-    stock: number
-    waitingTime: Time
     effects: Effect[]
     roles: Role[]
 }
 
-interface Role {
-    name: String
-    displayName: String | null
-    armorColor: number | null
-    readyLocation: Location | null
-    respawnLocation: Location
-    stock: number | null
-    waitingTime: Time | null
-    effects: Effect[]
-    extendsEffects: boolean
-    extendsItem: boolean
+interface ReadyLocation extends Location {
+    waitingTime: Time
 }
 
 interface Location {
-    world: String
+    world: string
     x: number
     y: number
     z: number
@@ -48,34 +44,53 @@ interface Location {
     pitch: number
 }
 
-interface EndCondition {
-    message:String
+interface Role {
+    name: string
+    displayName: string | null
+    armorColor: string | null
+    readyLocation: ReadyLocation | null
+    respawnLocation: Location | null
+    respawnCount: number | null
+    effects: Effect[]
+    extendsEffects: boolean
+    extendsItem: boolean
 }
-
-interface CompositEndCondition extends EndCondition {
-    conditions: EndCondition[]
-    condition: condition
-}
-
-type condition = "OR" | "AND"
 
 interface Effect {
-    name:String
-    second: number
-    amplifer: number
+    name: string
+    seconds: number
+    amplifier: number
     hideParticles: boolean
 }
 
-interface Beacon extends EndCondition {
+interface EndCondition {
+    type: EndConditionType
+    message: string
+}
+
+type EndConditionType = "extermination" | "beacon" | "ticket" | "composite"
+
+interface CompositeEndCondition extends EndCondition {
+    type: "composite"
+    conditions: EndCondition[]
+    operator: Operator
+}
+
+type Operator = "OR" | "AND"
+
+interface BeaconEndCondition extends EndCondition {
+    type: "beacon"
     location: Location
     hitpoint: number
 }
 
-interface Extermination extends EndCondition {
-    team: String
+interface ExterminationEndCondition extends EndCondition {
+    type: "extermination"
+    team: string
 }
 
-interface Ticket extends EndCondition {
-    team: String
+interface TicketEndCondition extends EndCondition {
+    type: "ticket"
+    team: string
     count: number
 }

@@ -1,4 +1,439 @@
+// ============================================================
+// キー難読化対応表
+// JSONのキーを1文字に短縮してデータ量を削減する
+// ============================================================
+const KEY_MAP = {
+    // Config
+    gamemode: 'a',
+    bossbar: 'b',
+    timeLimit: 'c',
+    startupCommands: 'd',
+    shutdownCommands: 'e',
+    teams: 'f',
+    endConditions: 'g',
+
+    // Bossbar
+    mcid: 'h',
+
+    // Time
+    hours: 'i',
+    minutes: 'j',
+    seconds: 'k',
+
+    // Team
+    name: 'l',
+    displayName: 'm',
+    armorColor: 'n',
+    respawnCount: 'o',
+    readyLocation: 'p',
+    respawnLocation: 'q',
+    effects: 'r',
+    roles: 's',
+
+    // Location
+    world: 't',
+    x: 'u',
+    y: 'v',
+    z: 'w',
+    yaw: 'A',
+    pitch: 'B',
+
+    // ReadyLocation (waitingTime)
+    waitingTime: 'C',
+
+    // Role
+    extendsEffects: 'D',
+    extendsItem: 'E',
+
+    // Effect
+    amplifier: 'F',
+    hideParticles: 'G',
+
+    // EndCondition
+    type: 'H',
+    message: 'I',
+    conditions: 'J',
+    operator: 'K',
+
+    // BeaconEndCondition
+    location: 'L',
+    hitpoint: 'M',
+
+    // ExterminationEndCondition / TicketEndCondition
+    team: 'N',
+    count: 'O'
+};
+
+// 逆引き用マップ（デコード時に使用）
+const REVERSE_KEY_MAP = Object.fromEntries(
+    Object.entries(KEY_MAP).map(([k, v]) => [v, k])
+);
+
+// ============================================================
+// JSON難読化関数
+// ============================================================
+
+/**
+ * オブジェクトのキーを短縮形に変換
+ */
+function minifyKeys(obj) {
+    if (obj === null || obj === undefined) {
+        return obj;
+    }
+    if (Array.isArray(obj)) {
+        return obj.map(item => minifyKeys(item));
+    }
+    if (typeof obj === 'object') {
+        const result = {};
+        for (const [key, value] of Object.entries(obj)) {
+            const shortKey = KEY_MAP[key] || key;
+            result[shortKey] = minifyKeys(value);
+        }
+        return result;
+    }
+    return obj;
+}
+
+/**
+ * 短縮キーを元に戻す（デコード用）
+ */
+function expandKeys(obj) {
+    if (obj === null || obj === undefined) {
+        return obj;
+    }
+    if (Array.isArray(obj)) {
+        return obj.map(item => expandKeys(item));
+    }
+    if (typeof obj === 'object') {
+        const result = {};
+        for (const [key, value] of Object.entries(obj)) {
+            const fullKey = REVERSE_KEY_MAP[key] || key;
+            result[fullKey] = expandKeys(value);
+        }
+        return result;
+    }
+    return obj;
+}
+
+/**
+ * ConfigオブジェクトをBase64エンコードされた短縮JSONに変換
+ */
+function encodeConfig(config) {
+    const minified = minifyKeys(config);
+    const json = JSON.stringify(minified);
+    return btoa(unescape(encodeURIComponent(json)));
+}
+
+/**
+ * Base64エンコードされた短縮JSONをConfigオブジェクトにデコード
+ */
+function decodeConfig(encoded) {
+    const json = decodeURIComponent(escape(atob(encoded)));
+    const minified = JSON.parse(json);
+    return expandKeys(minified);
+}
+
+// ============================================================
+// フォームからConfig取得
+// ============================================================
+
+/**
+ * HTMLフォームからConfigオブジェクトを生成
+ */
+function collectConfig() {
+    const config = {
+        gamemode: document.getElementById('gamemode')?.value || 'ADVENTURE',
+        bossbar: collectBossbar(),
+        timeLimit: collectTimeLimit(),
+        startupCommands: collectCommands('startup-commands-container'),
+        shutdownCommands: collectCommands('shutdown-commands-container'),
+        teams: collectTeams(),
+        endConditions: collectEndConditions()
+    };
+    return config;
+}
+
+function collectBossbar() {
+    const disable = document.getElementById('bossbar-disable');
+    if (disable && disable.checked) {
+        return null;
+    }
+    const mcid = document.getElementById('bossbar-mcid')?.value?.trim();
+    if (!mcid) {
+        return null;
+    }
+    return { mcid };
+}
+
+function collectTimeLimit() {
+    const disable = document.getElementById('timelimit-disable');
+    if (disable && disable.checked) {
+        return null;
+    }
+    return {
+        hours: parseInt(document.getElementById('timelimit-hours')?.value) || 0,
+        minutes: parseInt(document.getElementById('timelimit-minutes')?.value) || 0,
+        seconds: parseInt(document.getElementById('timelimit-seconds')?.value) || 0
+    };
+}
+
+function collectCommands(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return [];
+    const commands = [];
+    container.querySelectorAll('input[type="text"]').forEach(input => {
+        const cmd = input.value.trim();
+        if (cmd) {
+            commands.push(cmd);
+        }
+    });
+    return commands;
+}
+
+function collectTeams() {
+    const teams = [];
+    document.querySelectorAll('.team-card').forEach(card => {
+        teams.push(collectTeamFromCard(card));
+    });
+    return teams;
+}
+
+function collectTeamFromCard(card) {
+    const team = {
+        name: card.querySelector('input[name="team-name"]')?.value?.trim() || '',
+        displayName: card.querySelector('input[name="team-display-name"]')?.value?.trim() || '',
+        armorColor: card.querySelector('input[name="team-color"]')?.value || '#ffffff',
+        respawnCount: parseInt(card.querySelector('input[name="team-respawn-count"]')?.value) || 0,
+        readyLocation: collectReadyLocationFromCard(card),
+        respawnLocation: collectRespawnLocationFromCard(card),
+        effects: collectEffectsFromContainer(card),
+        roles: collectRolesFromCard(card)
+    };
+    return team;
+}
+
+function collectReadyLocationFromCard(card) {
+    const toggle = card.querySelector('.team-lobby-toggle');
+    if (toggle && !toggle.checked) {
+        return null;
+    }
+    return {
+        world: card.querySelector('input[name="team-lobby-world"]')?.value?.trim() || 'world',
+        x: parseFloat(card.querySelector('input[name="team-lobby-x"]')?.value) || 0,
+        y: parseFloat(card.querySelector('input[name="team-lobby-y"]')?.value) || 64,
+        z: parseFloat(card.querySelector('input[name="team-lobby-z"]')?.value) || 0,
+        yaw: parseFloat(card.querySelector('input[name="team-lobby-yaw"]')?.value) || 0,
+        pitch: parseFloat(card.querySelector('input[name="team-lobby-pitch"]')?.value) || 0,
+        waitingTime: {
+            hours: parseInt(card.querySelector('input[name="team-lobby-hours"]')?.value) || 0,
+            minutes: parseInt(card.querySelector('input[name="team-lobby-minutes"]')?.value) || 0,
+            seconds: parseInt(card.querySelector('input[name="team-lobby-seconds"]')?.value) || 0
+        }
+    };
+}
+
+function collectRespawnLocationFromCard(card) {
+    return {
+        world: card.querySelector('input[name="team-respawn-world"]')?.value?.trim() || 'world',
+        x: parseFloat(card.querySelector('input[name="team-respawn-x"]')?.value) || 0,
+        y: parseFloat(card.querySelector('input[name="team-respawn-y"]')?.value) || 64,
+        z: parseFloat(card.querySelector('input[name="team-respawn-z"]')?.value) || 0,
+        yaw: parseFloat(card.querySelector('input[name="team-respawn-yaw"]')?.value) || 0,
+        pitch: parseFloat(card.querySelector('input[name="team-respawn-pitch"]')?.value) || 0
+    };
+}
+
+function collectEffectsFromContainer(container) {
+    const effects = [];
+    container.querySelectorAll('.effect-card').forEach(card => {
+        const effect = {
+            name: card.querySelector('select[name="effect-name"]')?.value || '',
+            seconds: parseInt(card.querySelector('input[name="effect-duration"]')?.value) || 0,
+            amplifier: parseInt(card.querySelector('input[name="effect-level"]')?.value) || 0,
+            hideParticles: card.querySelector('input[name="effect-hide-particles"]')?.checked || false
+        };
+        if (effect.name) {
+            effects.push(effect);
+        }
+    });
+    return effects;
+}
+
+function collectRolesFromCard(card) {
+    const roles = [];
+    card.querySelectorAll('.role-card').forEach(roleCard => {
+        roles.push(collectRoleFromCard(roleCard));
+    });
+    return roles;
+}
+
+function collectRoleFromCard(card) {
+    const inheritColor = card.querySelector('input[name="role-inherit-color"]')?.checked;
+    const inheritRespawn = card.querySelector('input[name="role-inherit-respawn"]')?.checked;
+
+    const role = {
+        name: card.querySelector('input[name="role-name"]')?.value?.trim() || '',
+        displayName: card.querySelector('input[name="role-display-name"]')?.value?.trim() || null,
+        armorColor: inheritColor ? null : (card.querySelector('input[name="role-color"]')?.value || null),
+        readyLocation: null,
+        respawnLocation: null,
+        respawnCount: inheritRespawn ? null : (parseInt(card.querySelector('input[name="role-respawn-count"]')?.value) ?? null),
+        effects: collectEffectsFromContainer(card),
+        extendsEffects: card.querySelector('input[name="role-extends-effects"]')?.checked || false,
+        extendsItem: card.querySelector('input[name="role-extends-item"]')?.checked || false
+    };
+    return role;
+}
+
+function collectEndConditions() {
+    const conditions = [];
+    document.querySelectorAll('.end-condition-card').forEach(card => {
+        const condition = collectEndConditionFromCard(card);
+        if (condition) {
+            conditions.push(condition);
+        }
+    });
+    return conditions;
+}
+
+function collectEndConditionFromCard(card) {
+    const typeSelect = card.querySelector('.end-condition-type-select');
+    const type = typeSelect?.value || '';
+    const message = card.querySelector('input[name="end-condition-message"]')?.value?.trim() || '';
+
+    switch (type) {
+        case 'Beacon':
+            return {
+                type: 'beacon',
+                message,
+                location: {
+                    world: card.querySelector('input[name="beacon-world"]')?.value?.trim() || 'world',
+                    x: parseFloat(card.querySelector('input[name="beacon-x"]')?.value) || 0,
+                    y: parseFloat(card.querySelector('input[name="beacon-y"]')?.value) || 64,
+                    z: parseFloat(card.querySelector('input[name="beacon-z"]')?.value) || 0,
+                    yaw: 0,
+                    pitch: 0
+                },
+                hitpoint: parseInt(card.querySelector('input[name="beacon-hitpoint"]')?.value) || 100
+            };
+        case 'Extermination':
+            return {
+                type: 'extermination',
+                message,
+                team: card.querySelector('input[name="extermination-team"]')?.value?.trim() || ''
+            };
+        case 'Ticket':
+            return {
+                type: 'ticket',
+                message,
+                team: card.querySelector('input[name="ticket-team"]')?.value?.trim() || '',
+                count: parseInt(card.querySelector('input[name="ticket-count"]')?.value) || 0
+            };
+        case 'Composite':
+            return {
+                type: 'composite',
+                message,
+                operator: 'AND',
+                conditions: collectCompositeConditionsFromCard(card)
+            };
+        default:
+            return null;
+    }
+}
+
+function collectCompositeConditionsFromCard(card) {
+    const conditions = [];
+    card.querySelectorAll('.composite-condition-card').forEach(subCard => {
+        const typeSelect = subCard.querySelector('.composite-sub-type-select');
+        const type = typeSelect?.value || '';
+        const message = '';
+
+        switch (type) {
+            case 'Beacon':
+                conditions.push({
+                    type: 'beacon',
+                    message,
+                    location: {
+                        world: subCard.querySelector('input[name="composite-beacon-world"]')?.value?.trim() || 'world',
+                        x: parseFloat(subCard.querySelector('input[name="composite-beacon-x"]')?.value) || 0,
+                        y: parseFloat(subCard.querySelector('input[name="composite-beacon-y"]')?.value) || 64,
+                        z: parseFloat(subCard.querySelector('input[name="composite-beacon-z"]')?.value) || 0,
+                        yaw: 0,
+                        pitch: 0
+                    },
+                    hitpoint: parseInt(subCard.querySelector('input[name="composite-beacon-hp"]')?.value) || 100
+                });
+                break;
+            case 'Extermination':
+                conditions.push({
+                    type: 'extermination',
+                    message,
+                    team: subCard.querySelector('input[name="composite-extermination-team"]')?.value?.trim() || ''
+                });
+                break;
+            case 'Ticket':
+                conditions.push({
+                    type: 'ticket',
+                    message,
+                    team: subCard.querySelector('input[name="composite-ticket-team"]')?.value?.trim() || '',
+                    count: parseInt(subCard.querySelector('input[name="composite-ticket-count"]')?.value) || 0
+                });
+                break;
+        }
+    });
+    return conditions;
+}
+
+/**
+ * トースト通知を表示
+ */
+function showToast(message, type = 'success') {
+    const existing = document.getElementById('toast-notification');
+    if (existing) {
+        existing.remove();
+    }
+
+    const toast = document.createElement('div');
+    toast.id = 'toast-notification';
+    toast.className = `fixed bottom-24 left-1/2 -translate-x-1/2 px-6 py-3 rounded-xl shadow-lg text-white font-semibold z-50 transition-opacity duration-300 ${type === 'success' ? 'bg-green-600' : 'bg-red-600'}`;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+
+    setTimeout(() => {
+        toast.classList.add('opacity-0');
+        setTimeout(() => toast.remove(), 300);
+    }, 2000);
+}
+
+/**
+ * 設定用コマンドを生成してクリップボードにコピー
+ */
+async function generateAndCopyCommand() {
+    const config = collectConfig();
+    const encoded = encodeConfig(config);
+    const command = `/kcdk config import ${encoded}`;
+
+    try {
+        await navigator.clipboard.writeText(command);
+        showToast('コマンドをクリップボードにコピーしました');
+    } catch (err) {
+        console.error('クリップボードへのコピーに失敗:', err);
+        showToast('コピーに失敗しました', 'error');
+    }
+}
+
+// デバッグ用：コンソールでキー対応表を確認可能
+if (typeof window !== 'undefined') {
+    window.KCDK_KEY_MAP = KEY_MAP;
+    window.KCDK_REVERSE_KEY_MAP = REVERSE_KEY_MAP;
+    window.KCDK_encodeConfig = encodeConfig;
+    window.KCDK_decodeConfig = decodeConfig;
+    window.KCDK_collectConfig = collectConfig;
+}
+
+// ============================================================
 // バリデーション関連
+// ============================================================
 
 // エラー表示を追加（入力欄に赤ボーダー）
 function showValidationError(input) {
@@ -1625,8 +2060,8 @@ function setupGenerateCommandButton() {
             // エラーがある場合は警告モーダルを表示
             showValidationWarningModal(errors);
         } else {
-            // エラーがない場合は準備中メッセージ（今後コマンド生成処理を追加）
-            alert('この機能は準備中です');
+            // エラーがない場合はコマンドを生成してクリップボードにコピー
+            generateAndCopyCommand();
         }
     });
 
@@ -1645,6 +2080,53 @@ function setupGenerateCommandButton() {
     }
 }
 
+// コマンドオプション管理
+function createCommandInput(containerId, value = '') {
+    const container = document.getElementById(containerId);
+    const addBtn = container.querySelector('button');
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'command-item flex items-center gap-2';
+    wrapper.innerHTML = `
+        <input type="text" name="${containerId === 'startup-commands-container' ? 'startup-command' : 'shutdown-command'}"
+            value="${value}"
+            placeholder="例: /say ゲーム開始！"
+            class="flex-1 block rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-gray-800 shadow-sm transition placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/20 font-mono text-sm" />
+        <button type="button" class="delete-command-btn text-gray-400 hover:text-red-500 transition p-1">
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M6 18L18 6M6 6l12 12" />
+            </svg>
+        </button>
+    `;
+
+    container.insertBefore(wrapper, addBtn);
+
+    wrapper.querySelector('.delete-command-btn').addEventListener('click', () => {
+        wrapper.remove();
+    });
+
+    return wrapper;
+}
+
+function setupCommandManagement() {
+    const startupAddBtn = document.getElementById('add-startup-command-btn');
+    const shutdownAddBtn = document.getElementById('add-shutdown-command-btn');
+
+    if (startupAddBtn) {
+        startupAddBtn.addEventListener('click', () => {
+            const wrapper = createCommandInput('startup-commands-container');
+            wrapper.querySelector('input').focus();
+        });
+    }
+
+    if (shutdownAddBtn) {
+        shutdownAddBtn.addEventListener('click', () => {
+            const wrapper = createCommandInput('shutdown-commands-container');
+            wrapper.querySelector('input').focus();
+        });
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     setupToggleDisable('bossbar-disable', ['bossbar-mcid']);
     setupToggleDisable('timelimit-disable', ['timelimit-hours', 'timelimit-minutes', 'timelimit-seconds']);
@@ -1653,6 +2135,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setupQuickSetupModal();
     setupGenerateCommandButton();
     setupValidationListeners();
+    setupCommandManagement();
 
     // 既存のチームカードにエフェクト管理とロール管理を設定
     document.querySelectorAll('.team-card').forEach(card => {

@@ -208,6 +208,61 @@
             </div><!-- /flex -->
         </div>
 
+        <!-- コマンドオプション -->
+        <div class="mt-10">
+            <h2 class="text-2xl font-bold tracking-tight text-gray-900">
+                コマンドオプション
+            </h2>
+
+            <p class="mt-2 text-sm leading-relaxed text-gray-600">
+                ゲームの開始時・終了時に自動実行されるコマンドを設定します。
+            </p>
+
+            <div class="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- スタートアップコマンド -->
+                <div class="w-full rounded-2xl border border-gray-200 bg-white px-6 py-6 shadow-sm">
+                    <h3 class="mb-2 text-lg font-bold tracking-tight text-gray-900">
+                        スタートアップコマンド
+                    </h3>
+                    <p class="mb-4 text-sm leading-relaxed text-gray-500">
+                        ゲーム開始時に実行されるコマンド群
+                    </p>
+
+                    <div id="startup-commands-container" class="flex flex-col gap-2">
+                        <!-- コマンドがここに追加される -->
+                        <button type="button" id="add-startup-command-btn"
+                            class="flex items-center justify-center gap-2 h-12 rounded-xl border-2 border-dashed border-gray-300 text-gray-400 transition hover:border-indigo-400 hover:text-indigo-500">
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path d="M12 4v16m8-8H4" />
+                            </svg>
+                            <span class="text-sm font-semibold">コマンドを追加</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- シャットダウンコマンド -->
+                <div class="w-full rounded-2xl border border-gray-200 bg-white px-6 py-6 shadow-sm">
+                    <h3 class="mb-2 text-lg font-bold tracking-tight text-gray-900">
+                        シャットダウンコマンド
+                    </h3>
+                    <p class="mb-4 text-sm leading-relaxed text-gray-500">
+                        ゲーム終了時に実行されるコマンド群
+                    </p>
+
+                    <div id="shutdown-commands-container" class="flex flex-col gap-2">
+                        <!-- コマンドがここに追加される -->
+                        <button type="button" id="add-shutdown-command-btn"
+                            class="flex items-center justify-center gap-2 h-12 rounded-xl border-2 border-dashed border-gray-300 text-gray-400 transition hover:border-indigo-400 hover:text-indigo-500">
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path d="M12 4v16m8-8H4" />
+                            </svg>
+                            <span class="text-sm font-semibold">コマンドを追加</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="mt-10">
             <h2 class="text-2xl font-bold tracking-tight text-gray-900">
                 チーム設定
