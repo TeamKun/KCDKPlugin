@@ -6,11 +6,10 @@ import java.util.List;
 public class Role {
     private String name;
     private String displayName;
-    private Integer armorColor;
-    private GameLocation readyLocation;
+    private String armorColor;
+    private ReadyLocation readyLocation;
     private GameLocation respawnLocation;
-    private Integer stock;
-    private Time waitingTime;
+    private Integer respawnCount;
     private List<Effect> effects = new ArrayList<>();
     private boolean extendsEffects;
     private boolean extendsItem;
@@ -34,19 +33,35 @@ public class Role {
         this.displayName = displayName;
     }
 
-    public Integer getArmorColor() {
+    public String getArmorColor() {
         return armorColor;
     }
 
-    public void setArmorColor(Integer armorColor) {
+    public void setArmorColor(String armorColor) {
         this.armorColor = armorColor;
     }
 
-    public GameLocation getReadyLocation() {
+    /**
+     * HEX形式の文字列をRGB整数に変換
+     * 例: "#ef4444" -> 15684676
+     */
+    public Integer getArmorColorAsInt() {
+        if (armorColor == null || armorColor.isEmpty()) {
+            return null;
+        }
+        String hex = armorColor.startsWith("#") ? armorColor.substring(1) : armorColor;
+        try {
+            return Integer.parseInt(hex, 16);
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    public ReadyLocation getReadyLocation() {
         return readyLocation;
     }
 
-    public void setReadyLocation(GameLocation readyLocation) {
+    public void setReadyLocation(ReadyLocation readyLocation) {
         this.readyLocation = readyLocation;
     }
 
@@ -58,20 +73,12 @@ public class Role {
         this.respawnLocation = respawnLocation;
     }
 
-    public Integer getStock() {
-        return stock;
+    public Integer getRespawnCount() {
+        return respawnCount;
     }
 
-    public void setStock(Integer stock) {
-        this.stock = stock;
-    }
-
-    public Time getWaitingTime() {
-        return waitingTime;
-    }
-
-    public void setWaitingTime(Time waitingTime) {
-        this.waitingTime = waitingTime;
+    public void setRespawnCount(Integer respawnCount) {
+        this.respawnCount = respawnCount;
     }
 
     public List<Effect> getEffects() {

@@ -33,6 +33,6 @@ public class BeaconCondition extends EndCondition {
 
     @Override
     public String getType() {
-        return "Beacon";
+        return "beacon";
     }
 }

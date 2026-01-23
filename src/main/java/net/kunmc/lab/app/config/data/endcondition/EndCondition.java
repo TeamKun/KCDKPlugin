@@ -9,11 +9,10 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
     property = "type"
 )
 @JsonSubTypes({
-    @JsonSubTypes.Type(value = TimeLimitCondition.class, name = "TimeLimit"),
-    @JsonSubTypes.Type(value = BeaconCondition.class, name = "Beacon"),
-    @JsonSubTypes.Type(value = ExterminationCondition.class, name = "Extermination"),
-    @JsonSubTypes.Type(value = TicketCondition.class, name = "Ticket"),
-    @JsonSubTypes.Type(value = CompositeCondition.class, name = "Composite")
+    @JsonSubTypes.Type(value = BeaconCondition.class, name = "beacon"),
+    @JsonSubTypes.Type(value = ExterminationCondition.class, name = "extermination"),
+    @JsonSubTypes.Type(value = TicketCondition.class, name = "ticket"),
+    @JsonSubTypes.Type(value = CompositeCondition.class, name = "composite")
 })
 public abstract class EndCondition {
     private String message;

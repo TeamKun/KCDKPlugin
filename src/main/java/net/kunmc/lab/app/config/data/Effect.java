@@ -5,16 +5,16 @@ import org.bukkit.potion.PotionEffectType;
 
 public class Effect {
     private String name;
-    private int second;
+    private int seconds;
     private int amplifier;
     private boolean hideParticles;
 
     public Effect() {
     }
 
-    public Effect(String name, int second, int amplifier, boolean hideParticles) {
+    public Effect(String name, int seconds, int amplifier, boolean hideParticles) {
         this.name = name;
-        this.second = second;
+        this.seconds = seconds;
         this.amplifier = amplifier;
         this.hideParticles = hideParticles;
     }
@@ -27,12 +27,12 @@ public class Effect {
         this.name = name;
     }
 
-    public int getSecond() {
-        return second;
+    public int getSeconds() {
+        return seconds;
     }
 
-    public void setSecond(int second) {
-        this.second = second;
+    public void setSeconds(int seconds) {
+        this.seconds = seconds;
     }
 
     public int getAmplifier() {
@@ -59,6 +59,6 @@ public class Effect {
         if (type == null) {
             throw new IllegalArgumentException("Invalid potion effect: " + name);
         }
-        return new PotionEffect(type, second * 20, amplifier, true, !hideParticles);
+        return new PotionEffect(type, seconds * 20, amplifier, true, !hideParticles);
     }
 }

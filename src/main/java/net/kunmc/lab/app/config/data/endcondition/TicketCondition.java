@@ -31,6 +31,6 @@ public class TicketCondition extends EndCondition {
 
     @Override
     public String getType() {
-        return "Ticket";
+        return "ticket";
     }
 }

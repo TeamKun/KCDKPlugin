@@ -6,11 +6,10 @@ import java.util.List;
 public class Team {
     private String name;
     private String displayName;
-    private int armorColor;
-    private GameLocation readyLocation;
+    private String armorColor;
+    private int respawnCount;
+    private ReadyLocation readyLocation;
     private GameLocation respawnLocation;
-    private int stock;
-    private Time waitingTime;
     private List<Effect> effects = new ArrayList<>();
     private List<Role> roles = new ArrayList<>();
 
@@ -33,19 +32,43 @@ public class Team {
         this.displayName = displayName;
     }
 
-    public int getArmorColor() {
+    public String getArmorColor() {
         return armorColor;
     }
 
-    public void setArmorColor(int armorColor) {
+    public void setArmorColor(String armorColor) {
         this.armorColor = armorColor;
     }
 
-    public GameLocation getReadyLocation() {
+    /**
+     * HEX形式の文字列をRGB整数に変換
+     * 例: "#ef4444" -> 15684676
+     */
+    public int getArmorColorAsInt() {
+        if (armorColor == null || armorColor.isEmpty()) {
+            return 16777215; // 白
+        }
+        String hex = armorColor.startsWith("#") ? armorColor.substring(1) : armorColor;
+        try {
+            return Integer.parseInt(hex, 16);
+        } catch (NumberFormatException e) {
+            return 16777215; // 白
+        }
+    }
+
+    public int getRespawnCount() {
+        return respawnCount;
+    }
+
+    public void setRespawnCount(int respawnCount) {
+        this.respawnCount = respawnCount;
+    }
+
+    public ReadyLocation getReadyLocation() {
         return readyLocation;
     }
 
-    public void setReadyLocation(GameLocation readyLocation) {
+    public void setReadyLocation(ReadyLocation readyLocation) {
         this.readyLocation = readyLocation;
     }
 
@@ -55,22 +78,6 @@ public class Team {
 
     public void setRespawnLocation(GameLocation respawnLocation) {
         this.respawnLocation = respawnLocation;
-    }
-
-    public int getStock() {
-        return stock;
-    }
-
-    public void setStock(int stock) {
-        this.stock = stock;
-    }
-
-    public Time getWaitingTime() {
-        return waitingTime;
-    }
-
-    public void setWaitingTime(Time waitingTime) {
-        this.waitingTime = waitingTime;
     }
 
     public List<Effect> getEffects() {
@@ -87,5 +94,13 @@ public class Team {
 
     public void setRoles(List<Role> roles) {
         this.roles = roles;
+    }
+
+    /**
+     * waitingTimeを取得（ReadyLocationから）
+     * 後方互換性のためのヘルパー
+     */
+    public Time getWaitingTime() {
+        return readyLocation != null ? readyLocation.getWaitingTime() : null;
     }
 }

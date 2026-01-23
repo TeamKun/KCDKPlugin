@@ -118,9 +118,9 @@ public class GameConfigManager {
     private Time loadTime(ConfigurationSection section) {
         if (section == null) return null;
         return new Time(
-            section.contains("hour") ? section.getInt("hour") : null,
+            section.contains("hours") ? section.getInt("hours") : null,
             section.contains("minutes") ? section.getInt("minutes") : null,
-            section.contains("second") ? section.getInt("second") : null
+            section.contains("seconds") ? section.getInt("seconds") : null
         );
     }
 
@@ -139,10 +139,25 @@ public class GameConfigManager {
     private Effect loadEffect(ConfigurationSection section) {
         return new Effect(
             section.getString("name"),
-            section.getInt("second"),
+            section.getInt("seconds"),
             section.getInt("amplifier"),
             section.getBoolean("hideParticles", false)
         );
+    }
+
+    private ReadyLocation loadReadyLocation(ConfigurationSection section) {
+        if (section == null) return null;
+        ReadyLocation loc = new ReadyLocation();
+        loc.setWorld(section.getString("world", "world"));
+        loc.setX(section.getDouble("x", 0.0));
+        loc.setY(section.getDouble("y", 64.0));
+        loc.setZ(section.getDouble("z", 0.0));
+        loc.setYaw((float) section.getDouble("yaw", 0.0));
+        loc.setPitch((float) section.getDouble("pitch", 0.0));
+        if (section.contains("waitingTime")) {
+            loc.setWaitingTime(loadTime(section.getConfigurationSection("waitingTime")));
+        }
+        return loc;
     }
 
     private Role loadRole(ConfigurationSection section) {
@@ -151,21 +166,17 @@ public class GameConfigManager {
         role.setDisplayName(section.getString("displayName"));
 
         if (section.contains("armorColor")) {
-            role.setArmorColor(section.getInt("armorColor"));
+            role.setArmorColor(section.getString("armorColor"));
         }
 
         if (section.contains("readyLocation")) {
-            role.setReadyLocation(loadLocation(section.getConfigurationSection("readyLocation")));
+            role.setReadyLocation(loadReadyLocation(section.getConfigurationSection("readyLocation")));
         }
 
         role.setRespawnLocation(loadLocation(section.getConfigurationSection("respawnLocation")));
 
-        if (section.contains("stock")) {
-            role.setStock(section.getInt("stock"));
-        }
-
-        if (section.contains("waitingTime")) {
-            role.setWaitingTime(loadTime(section.getConfigurationSection("waitingTime")));
+        if (section.contains("respawnCount")) {
+            role.setRespawnCount(section.getInt("respawnCount"));
         }
 
         // effects
@@ -190,15 +201,14 @@ public class GameConfigManager {
         Team team = new Team();
         team.setName(section.getString("name"));
         team.setDisplayName(section.getString("displayName"));
-        team.setArmorColor(section.getInt("armorColor"));
+        team.setArmorColor(section.getString("armorColor"));
 
         if (section.contains("readyLocation")) {
-            team.setReadyLocation(loadLocation(section.getConfigurationSection("readyLocation")));
+            team.setReadyLocation(loadReadyLocation(section.getConfigurationSection("readyLocation")));
         }
 
         team.setRespawnLocation(loadLocation(section.getConfigurationSection("respawnLocation")));
-        team.setStock(section.getInt("stock", -1));
-        team.setWaitingTime(loadTime(section.getConfigurationSection("waitingTime")));
+        team.setRespawnCount(section.getInt("respawnCount", -1));
 
         // effects
         if (section.contains("effects")) {
@@ -234,30 +244,27 @@ public class GameConfigManager {
         String message = section.getString("message", "");
 
         switch (type) {
-            case "TimeLimit":
-                return new TimeLimitCondition(message);
-
-            case "Beacon":
+            case "beacon":
                 return new BeaconCondition(
                     message,
                     loadLocation(section.getConfigurationSection("location")),
                     section.getInt("hitpoint")
                 );
 
-            case "Extermination":
+            case "extermination":
                 return new ExterminationCondition(
                     message,
                     section.getString("team")
                 );
 
-            case "Ticket":
+            case "ticket":
                 return new TicketCondition(
                     message,
                     section.getString("team"),
                     section.getInt("count")
                 );
 
-            case "Composite":
+            case "composite":
                 List<EndCondition> conditions = new ArrayList<>();
                 List<?> conditionsList = section.getList("conditions");
                 if (conditionsList != null) {
@@ -270,7 +277,8 @@ public class GameConfigManager {
                         }
                     }
                 }
-                return new CompositeCondition(message, conditions);
+                String operator = section.getString("operator", "AND");
+                return new CompositeCondition(message, conditions, operator);
 
             default:
                 plugin.getLogger().warning("Unknown end condition type: " + type);
@@ -281,9 +289,15 @@ public class GameConfigManager {
     // ========== Save Methods ==========
 
     private void saveTime(String path, Time time) {
-        config.set(path + ".hour", time.getHour());
+        config.set(path + ".hours", time.getHours());
         config.set(path + ".minutes", time.getMinutes());
-        config.set(path + ".second", time.getSecond());
+        config.set(path + ".seconds", time.getSeconds());
+    }
+
+    private void saveTimeToSection(ConfigurationSection section, Time time) {
+        section.set("hours", time.getHours());
+        section.set("minutes", time.getMinutes());
+        section.set("seconds", time.getSeconds());
     }
 
     private void saveLocation(ConfigurationSection section, String path, GameLocation location) {
@@ -301,9 +315,26 @@ public class GameConfigManager {
 
     private void saveEffect(ConfigurationSection section, Effect effect) {
         section.set("name", effect.getName());
-        section.set("second", effect.getSecond());
+        section.set("seconds", effect.getSeconds());
         section.set("amplifier", effect.getAmplifier());
         section.set("hideParticles", effect.isHideParticles());
+    }
+
+    private void saveReadyLocation(ConfigurationSection section, String path, ReadyLocation location) {
+        if (location == null) {
+            section.set(path, null);
+            return;
+        }
+        section.set(path + ".world", location.getWorld());
+        section.set(path + ".x", location.getX());
+        section.set(path + ".y", location.getY());
+        section.set(path + ".z", location.getZ());
+        section.set(path + ".yaw", location.getYaw());
+        section.set(path + ".pitch", location.getPitch());
+        if (location.getWaitingTime() != null) {
+            ConfigurationSection timeSection = section.createSection(path + ".waitingTime");
+            saveTimeToSection(timeSection, location.getWaitingTime());
+        }
     }
 
     private void saveRole(ConfigurationSection section, Role role) {
@@ -312,18 +343,11 @@ public class GameConfigManager {
         section.set("armorColor", role.getArmorColor());
 
         if (role.getReadyLocation() != null) {
-            saveLocation(section, "readyLocation", role.getReadyLocation());
+            saveReadyLocation(section, "readyLocation", role.getReadyLocation());
         }
 
         saveLocation(section, "respawnLocation", role.getRespawnLocation());
-        section.set("stock", role.getStock());
-
-        if (role.getWaitingTime() != null) {
-            ConfigurationSection timeSection = section.createSection("waitingTime");
-            timeSection.set("hour", role.getWaitingTime().getHour());
-            timeSection.set("minutes", role.getWaitingTime().getMinutes());
-            timeSection.set("second", role.getWaitingTime().getSecond());
-        }
+        section.set("respawnCount", role.getRespawnCount());
 
         List<ConfigurationSection> effectsList = new ArrayList<>();
         for (Effect effect : role.getEffects()) {
@@ -343,18 +367,11 @@ public class GameConfigManager {
         section.set("armorColor", team.getArmorColor());
 
         if (team.getReadyLocation() != null) {
-            saveLocation(section, "readyLocation", team.getReadyLocation());
+            saveReadyLocation(section, "readyLocation", team.getReadyLocation());
         }
 
         saveLocation(section, "respawnLocation", team.getRespawnLocation());
-        section.set("stock", team.getStock());
-
-        if (team.getWaitingTime() != null) {
-            ConfigurationSection timeSection = section.createSection("waitingTime");
-            timeSection.set("hour", team.getWaitingTime().getHour());
-            timeSection.set("minutes", team.getWaitingTime().getMinutes());
-            timeSection.set("second", team.getWaitingTime().getSecond());
-        }
+        section.set("respawnCount", team.getRespawnCount());
 
         List<ConfigurationSection> effectsList = new ArrayList<>();
         for (Effect effect : team.getEffects()) {
@@ -390,6 +407,7 @@ public class GameConfigManager {
             section.set("count", tc.getCount());
         } else if (condition instanceof CompositeCondition) {
             CompositeCondition cc = (CompositeCondition) condition;
+            section.set("operator", cc.getOperator());
             List<ConfigurationSection> conditionsList = new ArrayList<>();
             for (EndCondition cond : cc.getConditions()) {
                 ConfigurationSection condSection = section.createSection("temp.condition");

@@ -1,8 +1,6 @@
 package net.kunmc.lab.app.command.subcommand;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonSyntaxException;
+import com.google.gson.*;
 import net.kunmc.lab.app.Store;
 import net.kunmc.lab.app.command.KCDKCommand;
 import net.kunmc.lab.app.command.SubCommand;
@@ -14,10 +12,57 @@ import org.bukkit.World;
 import org.bukkit.command.CommandSender;
 import org.bukkit.potion.PotionEffectType;
 
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class ConfigCommand implements SubCommand {
+
+    // JSON短縮キー対応表（逆引き用）
+    private static final Map<String, String> REVERSE_KEY_MAP = createReverseKeyMap();
+
+    private static Map<String, String> createReverseKeyMap() {
+        Map<String, String> map = new HashMap<>();
+        map.put("a", "gamemode");
+        map.put("b", "bossbar");
+        map.put("c", "timeLimit");
+        map.put("d", "startupCommands");
+        map.put("e", "shutdownCommands");
+        map.put("f", "teams");
+        map.put("g", "endConditions");
+        map.put("h", "mcid");
+        map.put("i", "hours");
+        map.put("j", "minutes");
+        map.put("k", "seconds");
+        map.put("l", "name");
+        map.put("m", "displayName");
+        map.put("n", "armorColor");
+        map.put("o", "respawnCount");
+        map.put("p", "readyLocation");
+        map.put("q", "respawnLocation");
+        map.put("r", "effects");
+        map.put("s", "roles");
+        map.put("t", "world");
+        map.put("u", "x");
+        map.put("v", "y");
+        map.put("w", "z");
+        map.put("A", "yaw");
+        map.put("B", "pitch");
+        map.put("C", "waitingTime");
+        map.put("D", "extendsEffects");
+        map.put("E", "extendsItem");
+        map.put("F", "amplifier");
+        map.put("G", "hideParticles");
+        map.put("H", "type");
+        map.put("I", "message");
+        map.put("J", "conditions");
+        map.put("K", "operator");
+        map.put("L", "location");
+        map.put("M", "hitpoint");
+        map.put("N", "team");
+        map.put("O", "count");
+        return Collections.unmodifiableMap(map);
+    }
 
     @Override
     public String getName() {
@@ -53,15 +98,9 @@ public class ConfigCommand implements SubCommand {
             return handleGamemode(sender, args);
         }
 
-        // showBossBar
-        if ("showbossbar".equals(subCommand)) {
-            if (args.length < 2) {
-                sender.sendMessage("§cUsage: /kcdk config showBossBar <true|false>");
-                return true;
-            }
-            // TODO: showBossBarはGameConfigにないため、後で実装
-            sender.sendMessage("§eShowBossBar is not implemented in GameConfig yet");
-            return true;
+        // bossbar
+        if ("bossbar".equals(subCommand)) {
+            return handleBossbar(sender, args);
         }
 
         // timeLimit
@@ -90,8 +129,11 @@ public class ConfigCommand implements SubCommand {
         sender.sendMessage("§a=== KCDK Configuration ===");
         sender.sendMessage("§eConfig Version: §f" + config.getConfigVersion());
         sender.sendMessage("§eGamemode: §f" + config.getGamemode());
+        sender.sendMessage("§eBossbar: §f" + (config.getBossbar() != null ? config.getBossbar().getMcid() : "none"));
         sender.sendMessage("§eTime Limit: §f" + (config.getTimeLimit() != null ?
-                config.getTimeLimit().getHour() + "h " + config.getTimeLimit().getMinutes() + "m " + config.getTimeLimit().getSecond() + "s" : "none"));
+                config.getTimeLimit().getHours() + "h " + config.getTimeLimit().getMinutes() + "m " + config.getTimeLimit().getSeconds() + "s" : "none"));
+        sender.sendMessage("§eStartup Commands: §f" + config.getStartupCommands().size());
+        sender.sendMessage("§eShutdown Commands: §f" + config.getShutdownCommands().size());
         sender.sendMessage("§eTeams: §f" + config.getTeams().size());
         for (Team team : config.getTeams()) {
             sender.sendMessage("  §7- §f" + team.getName() + " §7(§f" + team.getDisplayName() + "§7)");
@@ -124,21 +166,27 @@ public class ConfigCommand implements SubCommand {
 
     private boolean handleImport(CommandSender sender, String[] args) {
         if (args.length < 2) {
-            sender.sendMessage("§cUsage: /kcdk config import <json>");
+            sender.sendMessage("§cUsage: /kcdk config import <base64>");
             return true;
         }
 
-        // 全ての引数を結合してJSONとして扱う
-        String json = String.join(" ", Arrays.copyOfRange(args, 1, args.length));
+        // Base64エンコードされた短縮JSONを受け取る
+        String encoded = args[1];
 
         try {
+            // Base64デコード
+            String json = decodeBase64(encoded);
+
+            // 短縮キーを展開
+            JsonObject expanded = expandKeys(JsonParser.parseString(json));
+
             // GsonでGameConfigをデシリアライズ
             Gson gson = new GsonBuilder()
                     .setPrettyPrinting()
                     .registerTypeAdapter(EndCondition.class, new EndConditionDeserializer())
                     .create();
 
-            GameConfig importedConfig = gson.fromJson(json, GameConfig.class);
+            GameConfig importedConfig = gson.fromJson(expanded, GameConfig.class);
 
             if (importedConfig == null) {
                 sender.sendMessage("§cFailed to parse JSON: result is null");
@@ -151,10 +199,12 @@ public class ConfigCommand implements SubCommand {
             // YAMLに保存
             Store.config.saveGameConfig();
 
-            sender.sendMessage("§aConfiguration imported from JSON successfully");
+            sender.sendMessage("§aConfiguration imported from Base64 successfully");
             sender.sendMessage("§eTeams imported: §f" + importedConfig.getTeams().size());
             sender.sendMessage("§eEnd conditions imported: §f" + importedConfig.getEndConditions().size());
 
+        } catch (IllegalArgumentException e) {
+            sender.sendMessage("§cInvalid Base64 format: " + e.getMessage());
         } catch (JsonSyntaxException e) {
             sender.sendMessage("§cInvalid JSON format: " + e.getMessage());
         } catch (Exception e) {
@@ -165,22 +215,90 @@ public class ConfigCommand implements SubCommand {
         return true;
     }
 
+    /**
+     * Base64デコード
+     */
+    private String decodeBase64(String encoded) {
+        byte[] decoded = Base64.getDecoder().decode(encoded);
+        return new String(decoded, StandardCharsets.UTF_8);
+    }
+
+    /**
+     * 短縮キーを展開（再帰的）
+     */
+    private JsonObject expandKeys(JsonElement element) {
+        if (element.isJsonObject()) {
+            JsonObject obj = element.getAsJsonObject();
+            JsonObject result = new JsonObject();
+            for (Map.Entry<String, JsonElement> entry : obj.entrySet()) {
+                String key = entry.getKey();
+                String expandedKey = REVERSE_KEY_MAP.getOrDefault(key, key);
+                result.add(expandedKey, expandKeysRecursive(entry.getValue()));
+            }
+            return result;
+        }
+        return element.getAsJsonObject();
+    }
+
+    private JsonElement expandKeysRecursive(JsonElement element) {
+        if (element.isJsonObject()) {
+            return expandKeys(element);
+        } else if (element.isJsonArray()) {
+            JsonArray arr = element.getAsJsonArray();
+            JsonArray result = new JsonArray();
+            for (JsonElement item : arr) {
+                result.add(expandKeysRecursive(item));
+            }
+            return result;
+        }
+        return element;
+    }
+
     // ========== Gamemode ==========
 
     private boolean handleGamemode(CommandSender sender, String[] args) {
         if (args.length < 2) {
-            sender.sendMessage("§cUsage: /kcdk config gamemode <gamemode>");
+            sender.sendMessage("§cUsage: /kcdk config gamemode <ADVENTURE|SURVIVAL>");
             return true;
         }
 
-        String gamemode = args[1].toLowerCase();
-        if (!Arrays.asList("survival", "adventure", "creative", "spectator").contains(gamemode)) {
-            sender.sendMessage("§cInvalid gamemode. Use: survival, adventure, creative, spectator");
+        String gamemode = args[1].toUpperCase();
+        if (!Arrays.asList("ADVENTURE", "SURVIVAL").contains(gamemode)) {
+            sender.sendMessage("§cInvalid gamemode. Use: ADVENTURE, SURVIVAL");
             return true;
         }
 
         Store.config.getGameConfig().setGamemode(gamemode);
         sender.sendMessage("§aGamemode set to: §f" + gamemode);
+        return true;
+    }
+
+    // ========== Bossbar ==========
+
+    private boolean handleBossbar(CommandSender sender, String[] args) {
+        if (args.length < 2) {
+            sender.sendMessage("§cUsage: /kcdk config bossbar <set|remove> [mcid]");
+            return true;
+        }
+
+        String action = args[1].toLowerCase();
+        if ("set".equals(action)) {
+            if (args.length < 3) {
+                sender.sendMessage("§cUsage: /kcdk config bossbar set <mcid>");
+                return true;
+            }
+            String mcid = args[2];
+            Bossbar bossbar = new Bossbar(mcid);
+            Store.config.getGameConfig().setBossbar(bossbar);
+            sender.sendMessage("§aBossbar MCID set to: §f" + mcid);
+            return true;
+        } else if ("remove".equals(action)) {
+            Store.config.getGameConfig().setBossbar(null);
+            sender.sendMessage("§aBossbar removed");
+            return true;
+        }
+
+        sender.sendMessage("§cUnknown action: " + action);
         return true;
     }
 
@@ -195,18 +313,18 @@ public class ConfigCommand implements SubCommand {
         String action = args[1].toLowerCase();
         if ("set".equals(action)) {
             if (args.length < 5) {
-                sender.sendMessage("§cUsage: /kcdk config timeLimit set <hour> <minutes> <second>");
+                sender.sendMessage("§cUsage: /kcdk config timeLimit set <hours> <minutes> <seconds>");
                 return true;
             }
 
             try {
-                int hour = Integer.parseInt(args[2]);
+                int hours = Integer.parseInt(args[2]);
                 int minutes = Integer.parseInt(args[3]);
-                int second = Integer.parseInt(args[4]);
+                int seconds = Integer.parseInt(args[4]);
 
-                Time timeLimit = new Time(hour, minutes, second);
+                Time timeLimit = new Time(hours, minutes, seconds);
                 Store.config.getGameConfig().setTimeLimit(timeLimit);
-                sender.sendMessage("§aTime limit set to: §f" + hour + "h " + minutes + "m " + second + "s");
+                sender.sendMessage("§aTime limit set to: §f" + hours + "h " + minutes + "m " + seconds + "s");
             } catch (NumberFormatException e) {
                 sender.sendMessage("§cInvalid number format");
             }
@@ -242,9 +360,8 @@ public class ConfigCommand implements SubCommand {
             Team newTeam = new Team();
             newTeam.setName(teamName);
             newTeam.setDisplayName(teamName);
-            newTeam.setArmorColor(16777215); // 白色
-            newTeam.setStock(-1);
-            newTeam.setWaitingTime(new Time(0, 0, 0));
+            newTeam.setArmorColor("#ffffff");
+            newTeam.setRespawnCount(-1);
 
             // デフォルトのリスポーン地点
             GameLocation defaultLoc = new GameLocation("world", 0, 64, 0, 0, 0);
@@ -326,13 +443,9 @@ public class ConfigCommand implements SubCommand {
                     sender.sendMessage("§cUsage: /kcdk config team <team> armorColor <color>");
                     return true;
                 }
-                try {
-                    int color = Integer.parseInt(args[0]);
-                    team.setArmorColor(color);
-                    sender.sendMessage("§aArmor color set to: §f" + color);
-                } catch (NumberFormatException e) {
-                    sender.sendMessage("§cInvalid color value");
-                }
+                String color = args[0];
+                team.setArmorColor(color);
+                sender.sendMessage("§aArmor color set to: §f" + color);
                 return true;
 
             case "readylocation":
@@ -341,18 +454,24 @@ public class ConfigCommand implements SubCommand {
                     sender.sendMessage("§aReady location removed");
                     return true;
                 }
-                if (args.length < 6) {
-                    sender.sendMessage("§cUsage: /kcdk config team <team> readyLocation <world> <x> <y> <z> <yaw> <pitch>");
+                if (args.length < 9) {
+                    sender.sendMessage("§cUsage: /kcdk config team <team> readyLocation <world> <x> <y> <z> <yaw> <pitch> <hours> <minutes> <seconds>");
                     return true;
                 }
                 try {
-                    GameLocation loc = new GameLocation(
+                    Time waitingTime = new Time(
+                            Integer.parseInt(args[6]),
+                            Integer.parseInt(args[7]),
+                            Integer.parseInt(args[8])
+                    );
+                    ReadyLocation loc = new ReadyLocation(
                             args[0],
                             Double.parseDouble(args[1]),
                             Double.parseDouble(args[2]),
                             Double.parseDouble(args[3]),
                             Float.parseFloat(args[4]),
-                            Float.parseFloat(args[5])
+                            Float.parseFloat(args[5]),
+                            waitingTime
                     );
                     team.setReadyLocation(loc);
                     sender.sendMessage("§aReady location set");
@@ -382,35 +501,17 @@ public class ConfigCommand implements SubCommand {
                 }
                 return true;
 
-            case "stock":
+            case "respawncount":
                 if (args.length < 1) {
-                    sender.sendMessage("§cUsage: /kcdk config team <team> stock <count>");
+                    sender.sendMessage("§cUsage: /kcdk config team <team> respawnCount <count>");
                     return true;
                 }
                 try {
-                    int stock = Integer.parseInt(args[0]);
-                    team.setStock(stock);
-                    sender.sendMessage("§aStock set to: §f" + stock);
+                    int respawnCount = Integer.parseInt(args[0]);
+                    team.setRespawnCount(respawnCount);
+                    sender.sendMessage("§aRespawn count set to: §f" + respawnCount);
                 } catch (NumberFormatException e) {
                     sender.sendMessage("§cInvalid number");
-                }
-                return true;
-
-            case "waitingtime":
-                if (args.length < 3) {
-                    sender.sendMessage("§cUsage: /kcdk config team <team> waitingTime <hour> <minutes> <second>");
-                    return true;
-                }
-                try {
-                    Time time = new Time(
-                            Integer.parseInt(args[0]),
-                            Integer.parseInt(args[1]),
-                            Integer.parseInt(args[2])
-                    );
-                    team.setWaitingTime(time);
-                    sender.sendMessage("§aWaiting time set to: §f" + args[0] + "h " + args[1] + "m " + args[2] + "s");
-                } catch (NumberFormatException e) {
-                    sender.sendMessage("§cInvalid time values");
                 }
                 return true;
 
@@ -529,13 +630,9 @@ public class ConfigCommand implements SubCommand {
                     sender.sendMessage("§cUsage: /kcdk config team <team> role <role> armorColor <color>");
                     return true;
                 }
-                try {
-                    int color = Integer.parseInt(args[0]);
-                    role.setArmorColor(color);
-                    sender.sendMessage("§aRole armor color set to: §f" + color);
-                } catch (NumberFormatException e) {
-                    sender.sendMessage("§cInvalid color value");
-                }
+                String color = args[0];
+                role.setArmorColor(color);
+                sender.sendMessage("§aRole armor color set to: §f" + color);
                 return true;
 
             case "readylocation":
@@ -544,18 +641,24 @@ public class ConfigCommand implements SubCommand {
                     sender.sendMessage("§aRole ready location removed (will inherit from team)");
                     return true;
                 }
-                if (args.length < 6) {
-                    sender.sendMessage("§cUsage: /kcdk config team <team> role <role> readyLocation <world> <x> <y> <z> <yaw> <pitch>");
+                if (args.length < 9) {
+                    sender.sendMessage("§cUsage: /kcdk config team <team> role <role> readyLocation <world> <x> <y> <z> <yaw> <pitch> <hours> <minutes> <seconds>");
                     return true;
                 }
                 try {
-                    GameLocation loc = new GameLocation(
+                    Time waitingTime = new Time(
+                            Integer.parseInt(args[6]),
+                            Integer.parseInt(args[7]),
+                            Integer.parseInt(args[8])
+                    );
+                    ReadyLocation loc = new ReadyLocation(
                             args[0],
                             Double.parseDouble(args[1]),
                             Double.parseDouble(args[2]),
                             Double.parseDouble(args[3]),
                             Float.parseFloat(args[4]),
-                            Float.parseFloat(args[5])
+                            Float.parseFloat(args[5]),
+                            waitingTime
                     );
                     role.setReadyLocation(loc);
                     sender.sendMessage("§aRole ready location set");
@@ -585,45 +688,22 @@ public class ConfigCommand implements SubCommand {
                 }
                 return true;
 
-            case "stock":
+            case "respawncount":
                 if (args.length > 0 && "remove".equals(args[0].toLowerCase())) {
-                    role.setStock(null);
-                    sender.sendMessage("§aRole stock removed (will inherit from team)");
+                    role.setRespawnCount(null);
+                    sender.sendMessage("§aRole respawn count removed (will inherit from team)");
                     return true;
                 }
                 if (args.length < 1) {
-                    sender.sendMessage("§cUsage: /kcdk config team <team> role <role> stock <count>");
+                    sender.sendMessage("§cUsage: /kcdk config team <team> role <role> respawnCount <count>");
                     return true;
                 }
                 try {
-                    int stock = Integer.parseInt(args[0]);
-                    role.setStock(stock);
-                    sender.sendMessage("§aRole stock set to: §f" + stock);
+                    int respawnCount = Integer.parseInt(args[0]);
+                    role.setRespawnCount(respawnCount);
+                    sender.sendMessage("§aRole respawn count set to: §f" + respawnCount);
                 } catch (NumberFormatException e) {
                     sender.sendMessage("§cInvalid number");
-                }
-                return true;
-
-            case "waitingtime":
-                if (args.length > 0 && "remove".equals(args[0].toLowerCase())) {
-                    role.setWaitingTime(null);
-                    sender.sendMessage("§aRole waiting time removed (will inherit from team)");
-                    return true;
-                }
-                if (args.length < 3) {
-                    sender.sendMessage("§cUsage: /kcdk config team <team> role <role> waitingTime <hour> <minutes> <second>");
-                    return true;
-                }
-                try {
-                    Time time = new Time(
-                            Integer.parseInt(args[0]),
-                            Integer.parseInt(args[1]),
-                            Integer.parseInt(args[2])
-                    );
-                    role.setWaitingTime(time);
-                    sender.sendMessage("§aRole waiting time set to: §f" + args[0] + "h " + args[1] + "m " + args[2] + "s");
-                } catch (NumberFormatException e) {
-                    sender.sendMessage("§cInvalid time values");
                 }
                 return true;
 
@@ -667,7 +747,7 @@ public class ConfigCommand implements SubCommand {
         // effect add
         if ("add".equals(action)) {
             if (args.length < 5) {
-                sender.sendMessage("§cUsage: ... effect add <effectName> <second> <amplifier> <hideParticles>");
+                sender.sendMessage("§cUsage: ... effect add <effectName> <seconds> <amplifier> <hideParticles>");
                 return true;
             }
 
@@ -679,11 +759,11 @@ public class ConfigCommand implements SubCommand {
             }
 
             try {
-                int second = Integer.parseInt(args[2]);
+                int seconds = Integer.parseInt(args[2]);
                 int amplifier = Integer.parseInt(args[3]);
                 boolean hideParticles = Boolean.parseBoolean(args[4]);
 
-                Effect effect = new Effect(effectName, second, amplifier, hideParticles);
+                Effect effect = new Effect(effectName, seconds, amplifier, hideParticles);
                 effects.add(effect);
                 sender.sendMessage("§aEffect added to " + target + ": §f" + effectName);
             } catch (NumberFormatException e) {
@@ -783,16 +863,6 @@ public class ConfigCommand implements SubCommand {
         String type = args[0].toLowerCase();
 
         switch (type) {
-            case "timelimit":
-                if (args.length < 2) {
-                    sender.sendMessage("§cUsage: /kcdk config endCondition add timeLimit <message>");
-                    return true;
-                }
-                String timeLimitMsg = String.join(" ", Arrays.copyOfRange(args, 1, args.length));
-                Store.config.getGameConfig().getEndConditions().add(new TimeLimitCondition(timeLimitMsg));
-                sender.sendMessage("§aTimeLimit condition added");
-                return true;
-
             case "beacon":
                 if (args.length < 9) {
                     sender.sendMessage("§cUsage: /kcdk config endCondition add beacon <message> <world> <x> <y> <z> <yaw> <pitch> <hitpoint>");
@@ -855,18 +925,18 @@ public class ConfigCommand implements SubCommand {
     public List<String> tabComplete(CommandSender sender, String[] args) {
         if (args.length == 1) {
             return KCDKCommand.filterStartingWith(args[0], Arrays.asList(
-                    "gamemode", "showBossBar", "timeLimit", "team", "endCondition", "show", "save", "reload", "import"
+                    "gamemode", "bossbar", "timeLimit", "team", "endCondition", "show", "save", "reload", "import"
             ));
         }
 
         String subCommand = args[0].toLowerCase();
 
         if ("gamemode".equals(subCommand) && args.length == 2) {
-            return KCDKCommand.filterStartingWith(args[1], Arrays.asList("survival", "adventure", "creative", "spectator"));
+            return KCDKCommand.filterStartingWith(args[1], Arrays.asList("ADVENTURE", "SURVIVAL"));
         }
 
-        if ("showbossbar".equals(subCommand) && args.length == 2) {
-            return KCDKCommand.filterStartingWith(args[1], Arrays.asList("true", "false"));
+        if ("bossbar".equals(subCommand) && args.length == 2) {
+            return KCDKCommand.filterStartingWith(args[1], Arrays.asList("set", "remove"));
         }
 
         if ("timelimit".equals(subCommand)) {
@@ -910,7 +980,7 @@ public class ConfigCommand implements SubCommand {
         if (args.length == 3 && !Arrays.asList("add", "remove", "clear").contains(action)) {
             return KCDKCommand.filterStartingWith(args[2], Arrays.asList(
                     "displayName", "armorColor", "readyLocation", "respawnLocation",
-                    "stock", "waitingTime", "effect", "role"
+                    "respawnCount", "effect", "role"
             ));
         }
 
@@ -961,7 +1031,7 @@ public class ConfigCommand implements SubCommand {
         if (args.length == 2 && !Arrays.asList("add", "remove", "clear").contains(action)) {
             return KCDKCommand.filterStartingWith(args[1], Arrays.asList(
                     "displayName", "armorColor", "readyLocation", "respawnLocation",
-                    "stock", "waitingTime", "extendsEffects", "extendsItem", "effect"
+                    "respawnCount", "extendsEffects", "extendsItem", "effect"
             ));
         }
 
@@ -973,7 +1043,7 @@ public class ConfigCommand implements SubCommand {
             }
 
             if (args.length == 3 && Arrays.asList("displayname", "armorcolor", "readylocation",
-                    "stock", "waitingtime").contains(property)) {
+                    "respawncount").contains(property)) {
                 return KCDKCommand.filterStartingWith(args[2], Collections.singletonList("remove"));
             }
 
@@ -1021,7 +1091,7 @@ public class ConfigCommand implements SubCommand {
         String action = args[1].toLowerCase();
 
         if ("add".equals(action) && args.length == 3) {
-            return KCDKCommand.filterStartingWith(args[2], Arrays.asList("timeLimit", "beacon", "extermination", "ticket"));
+            return KCDKCommand.filterStartingWith(args[2], Arrays.asList("beacon", "extermination", "ticket"));
         }
 
         if ("add".equals(action) && args.length >= 4) {

@@ -21,6 +21,6 @@ public class ExterminationCondition extends EndCondition {
 
     @Override
     public String getType() {
-        return "Extermination";
+        return "extermination";
     }
 }

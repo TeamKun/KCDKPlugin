@@ -18,30 +18,28 @@ public class EndConditionDeserializer implements JsonDeserializer<EndCondition> 
         String message = jsonObject.has("message") ? jsonObject.get("message").getAsString() : "";
 
         switch (type) {
-            case "TimeLimit":
-                return new TimeLimitCondition(message);
-
-            case "Beacon":
+            case "beacon":
                 GameLocation location = context.deserialize(jsonObject.get("location"), GameLocation.class);
                 int hitpoint = jsonObject.get("hitpoint").getAsInt();
                 return new BeaconCondition(message, location, hitpoint);
 
-            case "Extermination":
+            case "extermination":
                 String team = jsonObject.get("team").getAsString();
                 return new ExterminationCondition(message, team);
 
-            case "Ticket":
+            case "ticket":
                 String ticketTeam = jsonObject.get("team").getAsString();
                 int count = jsonObject.get("count").getAsInt();
                 return new TicketCondition(message, ticketTeam, count);
 
-            case "Composite":
+            case "composite":
                 JsonArray conditionsArray = jsonObject.getAsJsonArray("conditions");
                 List<EndCondition> conditions = new ArrayList<>();
                 for (JsonElement element : conditionsArray) {
                     conditions.add(context.deserialize(element, EndCondition.class));
                 }
-                return new CompositeCondition(message, conditions);
+                String operator = jsonObject.has("operator") ? jsonObject.get("operator").getAsString() : "AND";
+                return new CompositeCondition(message, conditions, operator);
 
             default:
                 throw new JsonParseException("Unknown EndCondition type: " + type);

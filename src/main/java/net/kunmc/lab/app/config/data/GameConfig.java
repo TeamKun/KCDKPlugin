@@ -6,8 +6,11 @@ import java.util.List;
 
 public class GameConfig {
     private int configVersion = 1;
-    private String gamemode = "survival";
+    private String gamemode = "ADVENTURE";
+    private Bossbar bossbar;
     private Time timeLimit;
+    private List<String> startupCommands = new ArrayList<>();
+    private List<String> shutdownCommands = new ArrayList<>();
     private List<Team> teams = new ArrayList<>();
     private List<EndCondition> endConditions = new ArrayList<>();
 
@@ -30,12 +33,36 @@ public class GameConfig {
         this.gamemode = gamemode;
     }
 
+    public Bossbar getBossbar() {
+        return bossbar;
+    }
+
+    public void setBossbar(Bossbar bossbar) {
+        this.bossbar = bossbar;
+    }
+
     public Time getTimeLimit() {
         return timeLimit;
     }
 
     public void setTimeLimit(Time timeLimit) {
         this.timeLimit = timeLimit;
+    }
+
+    public List<String> getStartupCommands() {
+        return startupCommands;
+    }
+
+    public void setStartupCommands(List<String> startupCommands) {
+        this.startupCommands = startupCommands;
+    }
+
+    public List<String> getShutdownCommands() {
+        return shutdownCommands;
+    }
+
+    public void setShutdownCommands(List<String> shutdownCommands) {
+        this.shutdownCommands = shutdownCommands;
     }
 
     public List<Team> getTeams() {

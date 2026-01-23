@@ -1,25 +1,25 @@
 package net.kunmc.lab.app.config.data;
 
 public class Time {
-    private Integer hour;
+    private Integer hours;
     private Integer minutes;
-    private Integer second;
+    private Integer seconds;
 
     public Time() {
     }
 
-    public Time(Integer hour, Integer minutes, Integer second) {
-        this.hour = hour;
+    public Time(Integer hours, Integer minutes, Integer seconds) {
+        this.hours = hours;
         this.minutes = minutes;
-        this.second = second;
+        this.seconds = seconds;
     }
 
-    public Integer getHour() {
-        return hour;
+    public Integer getHours() {
+        return hours;
     }
 
-    public void setHour(Integer hour) {
-        this.hour = hour;
+    public void setHours(Integer hours) {
+        this.hours = hours;
     }
 
     public Integer getMinutes() {
@@ -30,21 +30,21 @@ public class Time {
         this.minutes = minutes;
     }
 
-    public Integer getSecond() {
-        return second;
+    public Integer getSeconds() {
+        return seconds;
     }
 
-    public void setSecond(Integer second) {
-        this.second = second;
+    public void setSeconds(Integer seconds) {
+        this.seconds = seconds;
     }
 
     /**
      * 総秒数を計算
      */
     public int getTotalSeconds() {
-        int h = hour != null ? hour : 0;
+        int h = hours != null ? hours : 0;
         int m = minutes != null ? minutes : 0;
-        int s = second != null ? second : 0;
+        int s = seconds != null ? seconds : 0;
         return h * 3600 + m * 60 + s;
     }
 }
