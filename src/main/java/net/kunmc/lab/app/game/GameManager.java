@@ -26,6 +26,7 @@ public class GameManager {
     private BossBar bossBar;
     private long startTimeTick;
     private GameTimer timer;
+    private org.bukkit.scheduler.BukkitRunnable waitingTimer;
 
     public GameState getState() {
         return state;
@@ -98,10 +99,14 @@ public class GameManager {
             for (Team team : config.getTeams()) {
                 TeamData td = teams.get(team.getName());
 
-                // チームカラー設定
+                // チーム設定（カラー・FF・衝突）
                 org.bukkit.scoreboard.Team sbTeam = scoreboard.getTeam("kcdk." + team.getName());
-                if (sbTeam != null && team.getArmorColor() != null) {
-                    sbTeam.setColor(ArmorUtil.colorNameToChatColor(team.getArmorColor()));
+                if (sbTeam != null) {
+                    if (team.getArmorColor() != null) {
+                        sbTeam.setColor(ArmorUtil.colorNameToChatColor(team.getArmorColor()));
+                    }
+                    sbTeam.setAllowFriendlyFire(false);
+                    sbTeam.setOption(org.bukkit.scoreboard.Team.Option.COLLISION_RULE, org.bukkit.scoreboard.Team.OptionStatus.FOR_OTHER_TEAMS);
                 }
 
                 // チーム直属メンバー
@@ -121,11 +126,13 @@ public class GameManager {
                 for (Role role : team.getRoles()) {
                     org.bukkit.scoreboard.Team sbRole = scoreboard.getTeam("kcdk." + team.getName() + "." + role.getName());
                     if (sbRole != null) {
-                        // ロールカラー設定（未設定ならチームカラー継承）
+                        // ロール設定（カラー・FF・衝突）— 同一チーム扱い
                         String roleColor = role.getArmorColor() != null ? role.getArmorColor() : team.getArmorColor();
                         if (roleColor != null) {
                             sbRole.setColor(ArmorUtil.colorNameToChatColor(roleColor));
                         }
+                        sbRole.setAllowFriendlyFire(false);
+                        sbRole.setOption(org.bukkit.scoreboard.Team.Option.COLLISION_RULE, org.bukkit.scoreboard.Team.OptionStatus.FOR_OTHER_TEAMS);
                         for (String entry : sbRole.getEntries()) {
                             Player player = Bukkit.getPlayerExact(entry);
                             if (player != null) {
@@ -209,10 +216,43 @@ public class GameManager {
                 }
             }
 
-            // 最大待機時間後にstate=RUNNING、タイマー開始
+            // 待機中アクションバーカウントダウン
             int maxWaitTicks = getMaxWaitingTimeTicks(config);
+            final int totalWaitTicks = maxWaitTicks;
+            waitingTimer = new org.bukkit.scheduler.BukkitRunnable() {
+                private int elapsed = 0;
+                @Override
+                public void run() {
+                    if (state != GameState.STARTING) {
+                        cancel();
+                        return;
+                    }
+                    int remainingTicks = totalWaitTicks - elapsed;
+                    if (remainingTicks < 0) remainingTicks = 0;
+                    long remainSecs = remainingTicks / 20;
+                    long m = remainSecs / 60;
+                    long s = remainSecs % 60;
+                    String text = String.format("§e試合開始まで: §f%02d:%02d", m, s);
+                    for (Player p : Bukkit.getOnlinePlayers()) {
+                        p.spigot().sendMessage(
+                                net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
+                                net.md_5.bungee.api.chat.TextComponent.fromLegacyText(text)
+                        );
+                    }
+                    elapsed++;
+                }
+            };
+            waitingTimer.runTaskTimer(Store.plugin, 0L, 1L);
+
+            // 最大待機時間後にstate=RUNNING、タイマー開始
             Bukkit.getScheduler().runTaskLater(Store.plugin, () -> {
                 if (state == GameState.STARTING) {
+                    // 待機タイマー停止
+                    if (waitingTimer != null) {
+                        waitingTimer.cancel();
+                        waitingTimer = null;
+                    }
+
                     state = GameState.RUNNING;
                     startTimeTick = Bukkit.getWorlds().get(0).getFullTime();
 
@@ -314,6 +354,10 @@ public class GameManager {
         if (timer != null) {
             timer.cancel();
             timer = null;
+        }
+        if (waitingTimer != null) {
+            waitingTimer.cancel();
+            waitingTimer = null;
         }
 
         // BossBar削除

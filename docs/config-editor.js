@@ -877,6 +877,40 @@ function setupToggleDisable(toggleId, targetIds) {
     updateState();
 }
 
+// 座標ペーストボタン処理
+// /point の出力 "x y z" or "x y z yaw pitch" をパースして入力欄に反映
+function setupPasteButton(btn, prefix) {
+    btn.addEventListener('click', async () => {
+        try {
+            const text = await navigator.clipboard.readText();
+            const parts = text.trim().split(/\s+/);
+            if (parts.length < 3) {
+                alert('座標形式が不正です。"x y z" または "x y z yaw pitch" の形式でペーストしてください。');
+                return;
+            }
+            // カード全体から該当prefixの入力欄を検索
+            const card = btn.closest('.team-card, .end-condition-card, .role-card, .composite-sub-card')
+                      || btn.closest('[class*="fields"]')
+                      || btn.parentElement.parentElement;
+            if (!card) return;
+            const xInput = card.querySelector(`input[name="${prefix}-x"]`);
+            const yInput = card.querySelector(`input[name="${prefix}-y"]`);
+            const zInput = card.querySelector(`input[name="${prefix}-z"]`);
+            if (xInput) xInput.value = parts[0];
+            if (yInput) yInput.value = parts[1];
+            if (zInput) zInput.value = parts[2];
+            if (parts.length >= 5) {
+                const yawInput = card.querySelector(`input[name="${prefix}-yaw"]`);
+                const pitchInput = card.querySelector(`input[name="${prefix}-pitch"]`);
+                if (yawInput) yawInput.value = parts[3];
+                if (pitchInput) pitchInput.value = parts[4];
+            }
+        } catch (e) {
+            alert('クリップボードの読み取りに失敗しました。ブラウザの権限を確認してください。');
+        }
+    });
+}
+
 // チーム管理
 const defaultColors = ['RED', 'BLUE', 'GREEN', 'YELLOW', 'LIGHT_PURPLE', 'GOLD', 'AQUA', 'DARK_GREEN'];
 
@@ -1018,7 +1052,10 @@ function createTeamCard(teamNumber) {
                         <input type="text" name="team-lobby-world" placeholder="world" value="world" class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
                     </div>
                     <div>
-                        <label class="mb-1 block text-xs text-gray-500">座標 (X / Y / Z)</label>
+                        <div class="flex items-center justify-between mb-1">
+                            <label class="block text-xs text-gray-500">座標 (X / Y / Z)</label>
+                            <button type="button" class="paste-coord-btn text-xs text-indigo-500 hover:text-indigo-700" data-prefix="team-lobby">📋 ペースト</button>
+                        </div>
                         <div class="grid grid-cols-3 gap-2">
                             <input type="number" name="team-lobby-x" placeholder="X" step="0.01" value="0" class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
                             <input type="number" name="team-lobby-y" placeholder="Y" step="0.01" value="64" class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
@@ -1052,7 +1089,10 @@ function createTeamCard(teamNumber) {
                         <input type="text" name="team-respawn-world" placeholder="world" value="world" class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
                     </div>
                     <div>
-                        <label class="mb-1 block text-xs text-gray-500">座標 (X / Y / Z)</label>
+                        <div class="flex items-center justify-between mb-1">
+                            <label class="block text-xs text-gray-500">座標 (X / Y / Z)</label>
+                            <button type="button" class="paste-coord-btn text-xs text-indigo-500 hover:text-indigo-700" data-prefix="team-respawn">📋 ペースト</button>
+                        </div>
                         <div class="grid grid-cols-3 gap-2">
                             <input type="number" name="team-respawn-x" placeholder="X" step="0.01" value="0" class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
                             <input type="number" name="team-respawn-y" placeholder="Y" step="0.01" value="64" class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
@@ -1114,6 +1154,11 @@ function createTeamCard(teamNumber) {
     // ロール管理のイベント
     setupRoleManagement(card);
 
+    // 座標ペーストボタン設定
+    card.querySelectorAll('.paste-coord-btn').forEach(btn => {
+        setupPasteButton(btn, btn.dataset.prefix);
+    });
+
     // デフォルトカラー設定
     const colorSelect = card.querySelector('select[name="team-color"]');
     if (colorSelect) {
@@ -1169,6 +1214,10 @@ function setupTeamManagement() {
         setupTeamLobbyToggle(card);
         // アーマーカラー背景色
         setupTeamColorChange(card);
+        // 座標ペーストボタン
+        card.querySelectorAll('.paste-coord-btn').forEach(btn => {
+            setupPasteButton(btn, btn.dataset.prefix);
+        });
     });
 
     // 追加ボタン
@@ -1369,6 +1418,10 @@ function createRoleCard() {
                 </div>
                 <div class="role-inherit-field-group space-y-1 opacity-50">
                     <input type="text" name="role-lobby-world" placeholder="world" value="world" class="role-inherit-field block w-full rounded-lg border border-gray-300 bg-gray-100 px-2 py-1 text-xs text-gray-800 placeholder:text-gray-400" disabled />
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs text-gray-400">座標</span>
+                        <button type="button" class="paste-coord-btn text-xs text-indigo-500 hover:text-indigo-700" data-prefix="role-lobby">📋 ペースト</button>
+                    </div>
                     <div class="grid grid-cols-3 gap-1">
                         <input type="number" name="role-lobby-x" placeholder="X" step="0.01" class="role-inherit-field block w-full rounded-lg border border-gray-300 bg-gray-100 px-2 py-1 text-xs" disabled />
                         <input type="number" name="role-lobby-y" placeholder="Y" step="0.01" class="role-inherit-field block w-full rounded-lg border border-gray-300 bg-gray-100 px-2 py-1 text-xs" disabled />
@@ -1398,6 +1451,10 @@ function createRoleCard() {
                 </div>
                 <div class="role-inherit-field-group space-y-1 opacity-50">
                     <input type="text" name="role-respawn-world" placeholder="world" value="world" class="role-inherit-field block w-full rounded-lg border border-gray-300 bg-gray-100 px-2 py-1 text-xs text-gray-800 placeholder:text-gray-400" disabled />
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs text-gray-400">座標</span>
+                        <button type="button" class="paste-coord-btn text-xs text-indigo-500 hover:text-indigo-700" data-prefix="role-respawn">📋 ペースト</button>
+                    </div>
                     <div class="grid grid-cols-3 gap-1">
                         <input type="number" name="role-respawn-x" placeholder="X" step="0.01" class="role-inherit-field block w-full rounded-lg border border-gray-300 bg-gray-100 px-2 py-1 text-xs" disabled />
                         <input type="number" name="role-respawn-y" placeholder="Y" step="0.01" class="role-inherit-field block w-full rounded-lg border border-gray-300 bg-gray-100 px-2 py-1 text-xs" disabled />
@@ -1442,6 +1499,11 @@ function createRoleCard() {
 
     // ロールエフェクト管理
     setupRoleEffectManagement(card);
+
+    // 座標ペーストボタン設定
+    card.querySelectorAll('.paste-coord-btn').forEach(btn => {
+        setupPasteButton(btn, btn.dataset.prefix);
+    });
 
     return card;
 }
@@ -1588,6 +1650,10 @@ function createEndConditionCard(conditionNumber) {
                         <label class="mb-1 block text-xs font-semibold text-gray-600">ワールド</label>
                         <input type="text" name="beacon-world" placeholder="world" value="world" class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
                     </div>
+                    <div class="flex items-center justify-between">
+                        <label class="text-xs font-semibold text-gray-600">座標</label>
+                        <button type="button" class="paste-coord-btn text-xs text-indigo-500 hover:text-indigo-700" data-prefix="beacon">📋 ペースト</button>
+                    </div>
                     <div>
                         <label class="mb-1 block text-xs font-semibold text-gray-600">X</label>
                         <input type="number" name="beacon-x" placeholder="0" step="0.01" value="0" class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
@@ -1670,6 +1736,11 @@ function createEndConditionCard(conditionNumber) {
     // Composite条件管理
     setupCompositeConditionManagement(card);
 
+    // 座標ペーストボタン設定
+    card.querySelectorAll('.paste-coord-btn').forEach(btn => {
+        setupPasteButton(btn, btn.dataset.prefix);
+    });
+
     return card;
 }
 
@@ -1740,7 +1811,10 @@ function createCompositeConditionCard() {
             <!-- Beacon -->
             <div class="composite-beacon-fields space-y-1">
                 <input type="text" name="composite-beacon-world" placeholder="world" value="world" class="block w-full rounded border border-gray-300 bg-white px-2 py-1 text-xs" />
-                <label class="mb-1 block text-xs text-gray-500">座標 (X / Y / Z)</label>
+                <div class="flex items-center justify-between">
+                    <label class="text-xs text-gray-500">座標 (X / Y / Z)</label>
+                    <button type="button" class="paste-coord-btn text-xs text-indigo-500 hover:text-indigo-700" data-prefix="composite-beacon">📋 ペースト</button>
+                </div>
                 <div class="grid grid-cols-3 gap-1">
                     <input type="number" name="composite-beacon-x" placeholder="X" step="0.01" value="0" class="block w-full rounded border border-gray-300 bg-white px-1 py-1 text-xs" />
                     <input type="number" name="composite-beacon-y" placeholder="Y" step="0.01" value="64" class="block w-full rounded border border-gray-300 bg-white px-1 py-1 text-xs" />
@@ -1798,6 +1872,11 @@ function createCompositeConditionCard() {
 
     subTypeSelect.addEventListener('change', updateSubFields);
     updateSubFields();
+
+    // 座標ペーストボタン設定
+    card.querySelectorAll('.paste-coord-btn').forEach(btn => {
+        setupPasteButton(btn, btn.dataset.prefix);
+    });
 
     return card;
 }

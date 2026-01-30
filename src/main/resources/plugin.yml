@@ -8,6 +8,10 @@ commands:
     description: KCDK main command
     usage: /kcdk <setup|team|game|config>
     permission: kcdk.use
+  point:
+    description: Get current coordinates
+    usage: /point [--rotation | i]
+    permission: kcdk.use
 
 permissions:
   kcdk.use:

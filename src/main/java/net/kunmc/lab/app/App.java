@@ -2,10 +2,12 @@ package net.kunmc.lab.app;
 
 import java.util.Objects;
 import net.kunmc.lab.app.command.KCDKCommand;
+import net.kunmc.lab.app.command.PointCommand;
 import net.kunmc.lab.app.config.Config;
 import net.kunmc.lab.app.game.GameManager;
 import net.kunmc.lab.app.game.GameState;
 import net.kunmc.lab.app.listener.GameListener;
+import net.kunmc.lab.app.listener.PointListener;
 import net.kunmc.lab.app.util.ScoreboardUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.command.PluginCommand;
@@ -28,8 +30,17 @@ public final class App extends JavaPlugin {
             command.setTabCompleter(kcdkCommand);
         }
 
+        // pointコマンド登録
+        PointCommand pointCommand = new PointCommand();
+        PluginCommand pointCmd = getCommand("point");
+        if (pointCmd != null) {
+            pointCmd.setExecutor(pointCommand);
+            pointCmd.setTabCompleter(pointCommand);
+        }
+
         // イベントリスナー登録
         Bukkit.getPluginManager().registerEvents(new GameListener(), this);
+        Bukkit.getPluginManager().registerEvents(new PointListener(), this);
     }
 
     @Override
