@@ -2,9 +2,10 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 
+
 plugins {
     id "java"
-    id "com.github.johnrengelman.shadow" version "7.1.2"
+    id "io.github.goooler.shadow" version "8.1.8"
 }
 
 group = "net.kunmc.lab"
@@ -38,6 +39,7 @@ dependencies {
 
 def targetJavaVersion = 21
 java {
+
     def javaVersion = JavaVersion.toVersion(targetJavaVersion)
     sourceCompatibility = javaVersion
     targetCompatibility = javaVersion

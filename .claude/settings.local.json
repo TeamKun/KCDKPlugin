@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(start editor/index.html)"
+      "Bash(start editor/index.html)",
+      "Bash(./gradlew build:*)"
     ]
   }
 }
