@@ -31,7 +31,7 @@ repositories {
 }
 
 dependencies {
-    compileOnly "org.spigotmc:spigot-api:1.21.5-R0.1-SNAPSHOT"
+    compileOnly "org.spigotmc:spigot-api:1.21.11-R0.1-SNAPSHOT"
     implementation "com.google.code.gson:gson:2.10.1"
     implementation "com.fasterxml.jackson.core:jackson-core:2.17.2"
     implementation "com.fasterxml.jackson.core:jackson-databind:2.17.2"
@@ -97,26 +97,30 @@ task copyToServer(group: "copy") {
     }
 }
 
-task copyProtocolLibToServer(group: "copy", type: Copy) {
-    String fileNamePattern = ".*ProtocolLib.*.jar"
+task copyProtocolLibToServer(group: "copy") {
+    doLast {
+        String fileNamePattern = ".*ProtocolLib.*.jar"
 
-    boolean exists = new File("server/plugins/").listFiles(new FilenameFilter() {
-        @Override
-        boolean accept(File dir, String name) {
-            return name.matches(fileNamePattern)
+        boolean exists = new File("server/plugins/").listFiles(new FilenameFilter() {
+            @Override
+            boolean accept(File dir, String name) {
+                return name.matches(fileNamePattern)
+            }
+        })
+        if (exists) {
+            return
         }
-    })
-    if (exists) {
-        return
-    }
 
-    configurations.compileClasspath.getFiles().stream()
-            .filter(x -> x.getName().matches(fileNamePattern))
-            .findFirst()
-            .ifPresent(x -> {
-                from x
-                into "server/plugins"
-            })
+        configurations.compileClasspath.getFiles().stream()
+                .filter(x -> x.getName().matches(fileNamePattern))
+                .findFirst()
+                .ifPresent(x -> {
+                    copy {
+                        from x
+                        into "server/plugins"
+                    }
+                })
+    }
 }
 
 task buildAndCopy(group: "build") {
@@ -124,32 +128,36 @@ task buildAndCopy(group: "build") {
 }
 
 task downloadServerJar {
-    URL url = new URL("https://api.papermc.io/v2/projects/paper/versions/1.20.4/builds/497/downloads/paper-1.20.4-497.jar")
+    doLast {
+        URL url = new URL("https://fill-data.papermc.io/v1/objects/4a558a00005d33dafa4c4d5f9e47b3bd47d92311fceccd9c9754ee6b913f8649/paper-1.21.11-100.jar")
 
-    File file = new File(projectDir.toPath().toAbsolutePath().toString() + "/server/server.jar")
+        File file = new File(projectDir.toPath().toAbsolutePath().toString() + "/server/server.jar")
 
-    if (!file.exists()) {
-        try (InputStream stream = url.openStream()) {
-            Files.copy(stream, file.toPath(), StandardCopyOption.REPLACE_EXISTING)
+        if (!file.exists()) {
+            try (InputStream stream = url.openStream()) {
+                Files.copy(stream, file.toPath(), StandardCopyOption.REPLACE_EXISTING)
+            }
         }
     }
 }
 
 task generatePatchedJar(group: "setup", dependsOn: downloadServerJar) {
-    String serverDir = projectDir.toPath().toAbsolutePath().toString() + "/server"
+    doLast {
+        String serverDir = projectDir.toPath().toAbsolutePath().toString() + "/server"
 
-    File file = new File(serverDir + "/cache/patched_1.20.4.jar")
-    if (file.exists()) {
-        return
-    }
+        File file = new File(serverDir + "/cache/patched_1.20.4.jar")
+        if (file.exists()) {
+            return
+        }
 
-    try {
-        Runtime runtime = Runtime.getRuntime()
-        Process p = runtime.exec("java -jar " + serverDir + "/server.jar nogui", new String[0], new File(serverDir))
-        p.waitFor()
-        p.destroy()
-    } catch (Exception e) {
-        e.printStackTrace()
+        try {
+            Runtime runtime = Runtime.getRuntime()
+            Process p = runtime.exec("java -jar " + serverDir + "/server.jar nogui", new String[0], new File(serverDir))
+            p.waitFor()
+            p.destroy()
+        } catch (Exception e) {
+            e.printStackTrace()
+        }
     }
 }
 
