@@ -179,6 +179,10 @@ public class GameConfigManager {
             role.setRespawnCount(section.getInt("respawnCount"));
         }
 
+        if (section.contains("hasArmor")) {
+            role.setHasArmor(section.getBoolean("hasArmor"));
+        }
+
         // effects
         if (section.contains("effects")) {
             List<?> effectsList = section.getList("effects");
@@ -209,6 +213,7 @@ public class GameConfigManager {
 
         team.setRespawnLocation(loadLocation(section.getConfigurationSection("respawnLocation")));
         team.setRespawnCount(section.getInt("respawnCount", -1));
+        team.setHasArmor(section.getBoolean("hasArmor", true));
 
         // effects
         if (section.contains("effects")) {
@@ -348,6 +353,7 @@ public class GameConfigManager {
 
         saveLocation(section, "respawnLocation", role.getRespawnLocation());
         section.set("respawnCount", role.getRespawnCount());
+        section.set("hasArmor", role.getHasArmor());
 
         List<ConfigurationSection> effectsList = new ArrayList<>();
         for (Effect effect : role.getEffects()) {
@@ -372,6 +378,7 @@ public class GameConfigManager {
 
         saveLocation(section, "respawnLocation", team.getRespawnLocation());
         section.set("respawnCount", team.getRespawnCount());
+        section.set("hasArmor", team.isHasArmor());
 
         List<ConfigurationSection> effectsList = new ArrayList<>();
         for (Effect effect : team.getEffects()) {

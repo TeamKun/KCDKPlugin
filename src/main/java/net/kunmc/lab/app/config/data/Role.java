@@ -10,6 +10,7 @@ public class Role {
     private ReadyLocation readyLocation;
     private GameLocation respawnLocation;
     private Integer respawnCount;
+    private Boolean hasArmor;
     private List<Effect> effects = new ArrayList<>();
     private boolean extendsEffects;
     private boolean extendsItem;
@@ -42,19 +43,13 @@ public class Role {
     }
 
     /**
-     * HEX形式の文字列をRGB整数に変換
-     * 例: "#ef4444" -> 15684676
+     * Minecraft標準色名からRGB整数値を取得。未設定ならnull。
      */
     public Integer getArmorColorAsInt() {
         if (armorColor == null || armorColor.isEmpty()) {
             return null;
         }
-        String hex = armorColor.startsWith("#") ? armorColor.substring(1) : armorColor;
-        try {
-            return Integer.parseInt(hex, 16);
-        } catch (NumberFormatException e) {
-            return null;
-        }
+        return net.kunmc.lab.app.util.ArmorUtil.colorNameToRGB(armorColor);
     }
 
     public ReadyLocation getReadyLocation() {
@@ -79,6 +74,14 @@ public class Role {
 
     public void setRespawnCount(Integer respawnCount) {
         this.respawnCount = respawnCount;
+    }
+
+    public Boolean getHasArmor() {
+        return hasArmor;
+    }
+
+    public void setHasArmor(Boolean hasArmor) {
+        this.hasArmor = hasArmor;
     }
 
     public List<Effect> getEffects() {

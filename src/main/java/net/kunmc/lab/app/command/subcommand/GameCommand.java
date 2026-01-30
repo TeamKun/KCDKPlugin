@@ -1,5 +1,6 @@
 package net.kunmc.lab.app.command.subcommand;
 
+import net.kunmc.lab.app.Store;
 import net.kunmc.lab.app.command.KCDKCommand;
 import net.kunmc.lab.app.command.SubCommand;
 import org.bukkit.command.CommandSender;
@@ -26,18 +27,14 @@ public class GameCommand implements SubCommand {
 
         switch (action) {
             case "start":
-                // TODO: ゲーム開始処理を実装
-                sender.sendMessage("§aGame start command executed (not implemented yet)");
+                Store.gameManager.start(sender);
                 return true;
 
             case "stop":
-                if (args.length < 2) {
-                    sender.sendMessage("§cUsage: /kcdk game stop <title>");
-                    return true;
-                }
-                String title = String.join(" ", Arrays.copyOfRange(args, 1, args.length));
-                // TODO: ゲーム停止処理を実装
-                sender.sendMessage("§aGame stop command executed with title: " + title + " (not implemented yet)");
+                String title = args.length >= 2
+                        ? String.join(" ", Arrays.copyOfRange(args, 1, args.length))
+                        : "ゲームが強制終了されました。";
+                Store.gameManager.stop(title);
                 return true;
 
             default:

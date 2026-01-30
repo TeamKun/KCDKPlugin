@@ -1,6 +1,7 @@
 package net.kunmc.lab.app;
 
 import net.kunmc.lab.app.config.Config;
+import net.kunmc.lab.app.game.GameManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class Store {
@@ -8,6 +9,5 @@ public class Store {
     public static String pluginName;
     public static JavaPlugin plugin;
     public static Config config;
-
-//    public static QueuedExecutor queuedExecutor;
+    public static GameManager gameManager;
 }

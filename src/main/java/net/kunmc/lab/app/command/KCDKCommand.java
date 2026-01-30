@@ -20,6 +20,7 @@ public class KCDKCommand implements CommandExecutor, TabCompleter {
         registerSubCommand(new TeamCommand());
         registerSubCommand(new GameCommand());
         registerSubCommand(new ConfigCommand());
+        registerSubCommand(new ClearCommand());
     }
 
     private void registerSubCommand(SubCommand subCommand) {
@@ -30,7 +31,7 @@ public class KCDKCommand implements CommandExecutor, TabCompleter {
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command,
                              @NotNull String label, @NotNull String[] args) {
         if (args.length == 0) {
-            sender.sendMessage("§cUsage: /kcdk <setup|team|game|config>");
+            sender.sendMessage("§cUsage: /kcdk <setup|team|game|config|clear>");
             return true;
         }
 

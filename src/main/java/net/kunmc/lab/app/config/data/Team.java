@@ -7,6 +7,7 @@ public class Team {
     private String name;
     private String displayName;
     private String armorColor;
+    private boolean hasArmor = true;
     private int respawnCount;
     private ReadyLocation readyLocation;
     private GameLocation respawnLocation;
@@ -41,19 +42,18 @@ public class Team {
     }
 
     /**
-     * HEX形式の文字列をRGB整数に変換
-     * 例: "#ef4444" -> 15684676
+     * Minecraft標準色名からRGB整数値を取得
      */
     public int getArmorColorAsInt() {
-        if (armorColor == null || armorColor.isEmpty()) {
-            return 16777215; // 白
-        }
-        String hex = armorColor.startsWith("#") ? armorColor.substring(1) : armorColor;
-        try {
-            return Integer.parseInt(hex, 16);
-        } catch (NumberFormatException e) {
-            return 16777215; // 白
-        }
+        return net.kunmc.lab.app.util.ArmorUtil.colorNameToRGB(armorColor);
+    }
+
+    public boolean isHasArmor() {
+        return hasArmor;
+    }
+
+    public void setHasArmor(boolean hasArmor) {
+        this.hasArmor = hasArmor;
     }
 
     public int getRespawnCount() {

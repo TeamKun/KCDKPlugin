@@ -11,12 +11,47 @@ import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.command.CommandSender;
 import org.bukkit.potion.PotionEffectType;
+import org.bukkit.scoreboard.Scoreboard;
 
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class ConfigCommand implements SubCommand {
+
+    // import-part用の部分データ保持
+    private static final Map<UUID, PartialImport> partialImports = new HashMap<>();
+    private static final long PARTIAL_IMPORT_TIMEOUT_MS = 5 * 60 * 1000; // 5分
+
+    private static class PartialImport {
+        final String[] parts;
+        final int totalParts;
+        final long timestamp;
+        int receivedCount;
+
+        PartialImport(int totalParts) {
+            this.parts = new String[totalParts];
+            this.totalParts = totalParts;
+            this.timestamp = System.currentTimeMillis();
+            this.receivedCount = 0;
+        }
+
+        boolean isExpired() {
+            return System.currentTimeMillis() - timestamp > PARTIAL_IMPORT_TIMEOUT_MS;
+        }
+
+        boolean isComplete() {
+            return receivedCount == totalParts;
+        }
+
+        String getCombined() {
+            StringBuilder sb = new StringBuilder();
+            for (String part : parts) {
+                sb.append(part);
+            }
+            return sb.toString();
+        }
+    }
 
     // JSON短縮キー対応表（逆引き用）
     private static final Map<String, String> REVERSE_KEY_MAP = createReverseKeyMap();
@@ -61,6 +96,7 @@ public class ConfigCommand implements SubCommand {
         map.put("M", "hitpoint");
         map.put("N", "team");
         map.put("O", "count");
+        map.put("P", "hasArmor");
         return Collections.unmodifiableMap(map);
     }
 
@@ -91,6 +127,9 @@ public class ConfigCommand implements SubCommand {
 
             case "import":
                 return handleImport(sender, args);
+
+            case "import-part":
+                return handleImportPart(sender, args);
         }
 
         // gamemode
@@ -199,6 +238,9 @@ public class ConfigCommand implements SubCommand {
             // YAMLに保存
             Store.config.saveGameConfig();
 
+            // Scoreboardチーム自動作成
+            createScoreboardTeams(importedConfig);
+
             sender.sendMessage("§aConfiguration imported from Base64 successfully");
             sender.sendMessage("§eTeams imported: §f" + importedConfig.getTeams().size());
             sender.sendMessage("§eEnd conditions imported: §f" + importedConfig.getEndConditions().size());
@@ -213,6 +255,76 @@ public class ConfigCommand implements SubCommand {
         }
 
         return true;
+    }
+
+    private boolean handleImportPart(CommandSender sender, String[] args) {
+        if (args.length < 3) {
+            sender.sendMessage("§cUsage: /kcdk config import-part <current>/<total> <data>");
+            return true;
+        }
+
+        // パーツ番号をパース (例: "1/3")
+        String[] partInfo = args[1].split("/");
+        if (partInfo.length != 2) {
+            sender.sendMessage("§cInvalid part format. Use: <current>/<total>");
+            return true;
+        }
+
+        int currentPart;
+        int totalParts;
+        try {
+            currentPart = Integer.parseInt(partInfo[0]);
+            totalParts = Integer.parseInt(partInfo[1]);
+        } catch (NumberFormatException e) {
+            sender.sendMessage("§cInvalid part numbers");
+            return true;
+        }
+
+        if (currentPart < 1 || currentPart > totalParts || totalParts < 1) {
+            sender.sendMessage("§cInvalid part range: " + currentPart + "/" + totalParts);
+            return true;
+        }
+
+        String data = args[2];
+
+        // プレイヤーでない場合はUUIDなし
+        UUID senderId;
+        if (sender instanceof org.bukkit.entity.Player) {
+            senderId = ((org.bukkit.entity.Player) sender).getUniqueId();
+        } else {
+            senderId = new UUID(0, 0); // コンソール用
+        }
+
+        // タイムアウトした古いデータをクリア
+        partialImports.entrySet().removeIf(entry -> entry.getValue().isExpired());
+
+        // 既存のPartialImportを取得または新規作成
+        PartialImport partial = partialImports.get(senderId);
+        if (partial == null || partial.totalParts != totalParts || partial.isExpired()) {
+            partial = new PartialImport(totalParts);
+            partialImports.put(senderId, partial);
+        }
+
+        // パーツを格納
+        int index = currentPart - 1;
+        if (partial.parts[index] == null) {
+            partial.receivedCount++;
+        }
+        partial.parts[index] = data;
+
+        int remaining = partial.totalParts - partial.receivedCount;
+
+        if (partial.isComplete()) {
+            // 全パーツ揃った → 結合してimport処理に委譲
+            String combined = partial.getCombined();
+            partialImports.remove(senderId);
+
+            sender.sendMessage("§a全パーツを受信しました。インポートを開始します...");
+            return handleImport(sender, new String[]{"import", combined});
+        } else {
+            sender.sendMessage("§eパート " + currentPart + "/" + totalParts + " を受信しました。残り: §f" + remaining + " パート");
+            return true;
+        }
     }
 
     /**
@@ -441,9 +553,15 @@ public class ConfigCommand implements SubCommand {
             case "armorcolor":
                 if (args.length < 1) {
                     sender.sendMessage("§cUsage: /kcdk config team <team> armorColor <color>");
+                    sender.sendMessage("§7Valid colors: BLACK, DARK_BLUE, DARK_GREEN, DARK_AQUA, DARK_RED, DARK_PURPLE, GOLD, GRAY, DARK_GRAY, BLUE, GREEN, AQUA, RED, LIGHT_PURPLE, YELLOW, WHITE");
                     return true;
                 }
-                String color = args[0];
+                String color = args[0].toUpperCase();
+                if (net.kunmc.lab.app.util.ArmorUtil.colorNameToChatColor(color) == org.bukkit.ChatColor.WHITE && !"WHITE".equals(color)) {
+                    sender.sendMessage("§cInvalid color: " + args[0]);
+                    sender.sendMessage("§7Valid colors: BLACK, DARK_BLUE, DARK_GREEN, DARK_AQUA, DARK_RED, DARK_PURPLE, GOLD, GRAY, DARK_GRAY, BLUE, GREEN, AQUA, RED, LIGHT_PURPLE, YELLOW, WHITE");
+                    return true;
+                }
                 team.setArmorColor(color);
                 sender.sendMessage("§aArmor color set to: §f" + color);
                 return true;
@@ -513,6 +631,16 @@ public class ConfigCommand implements SubCommand {
                 } catch (NumberFormatException e) {
                     sender.sendMessage("§cInvalid number");
                 }
+                return true;
+
+            case "hasarmor":
+                if (args.length < 1) {
+                    sender.sendMessage("§cUsage: /kcdk config team <team> hasArmor <true|false>");
+                    return true;
+                }
+                boolean hasArmor = Boolean.parseBoolean(args[0]);
+                team.setHasArmor(hasArmor);
+                sender.sendMessage("§ahasArmor set to: §f" + hasArmor);
                 return true;
 
             default:
@@ -628,11 +756,17 @@ public class ConfigCommand implements SubCommand {
                 }
                 if (args.length < 1) {
                     sender.sendMessage("§cUsage: /kcdk config team <team> role <role> armorColor <color>");
+                    sender.sendMessage("§7Valid colors: BLACK, DARK_BLUE, DARK_GREEN, DARK_AQUA, DARK_RED, DARK_PURPLE, GOLD, GRAY, DARK_GRAY, BLUE, GREEN, AQUA, RED, LIGHT_PURPLE, YELLOW, WHITE");
                     return true;
                 }
-                String color = args[0];
-                role.setArmorColor(color);
-                sender.sendMessage("§aRole armor color set to: §f" + color);
+                String roleColor = args[0].toUpperCase();
+                if (net.kunmc.lab.app.util.ArmorUtil.colorNameToChatColor(roleColor) == org.bukkit.ChatColor.WHITE && !"WHITE".equals(roleColor)) {
+                    sender.sendMessage("§cInvalid color: " + args[0]);
+                    sender.sendMessage("§7Valid colors: BLACK, DARK_BLUE, DARK_GREEN, DARK_AQUA, DARK_RED, DARK_PURPLE, GOLD, GRAY, DARK_GRAY, BLUE, GREEN, AQUA, RED, LIGHT_PURPLE, YELLOW, WHITE");
+                    return true;
+                }
+                role.setArmorColor(roleColor);
+                sender.sendMessage("§aRole armor color set to: §f" + roleColor);
                 return true;
 
             case "readylocation":
@@ -725,6 +859,21 @@ public class ConfigCommand implements SubCommand {
                 boolean extendsItem = Boolean.parseBoolean(args[0]);
                 role.setExtendsItem(extendsItem);
                 sender.sendMessage("§aRole extendsItem set to: §f" + extendsItem);
+                return true;
+
+            case "hasarmor":
+                if (args.length > 0 && "remove".equals(args[0].toLowerCase())) {
+                    role.setHasArmor(null);
+                    sender.sendMessage("§aRole hasArmor removed (will inherit from team)");
+                    return true;
+                }
+                if (args.length < 1) {
+                    sender.sendMessage("§cUsage: /kcdk config team <team> role <role> hasArmor <true|false|remove>");
+                    return true;
+                }
+                boolean roleHasArmor = Boolean.parseBoolean(args[0]);
+                role.setHasArmor(roleHasArmor);
+                sender.sendMessage("§aRole hasArmor set to: §f" + roleHasArmor);
                 return true;
 
             default:
@@ -925,7 +1074,7 @@ public class ConfigCommand implements SubCommand {
     public List<String> tabComplete(CommandSender sender, String[] args) {
         if (args.length == 1) {
             return KCDKCommand.filterStartingWith(args[0], Arrays.asList(
-                    "gamemode", "bossbar", "timeLimit", "team", "endCondition", "show", "save", "reload", "import"
+                    "gamemode", "bossbar", "timeLimit", "team", "endCondition", "show", "save", "reload", "import", "import-part"
             ));
         }
 
@@ -980,7 +1129,7 @@ public class ConfigCommand implements SubCommand {
         if (args.length == 3 && !Arrays.asList("add", "remove", "clear").contains(action)) {
             return KCDKCommand.filterStartingWith(args[2], Arrays.asList(
                     "displayName", "armorColor", "readyLocation", "respawnLocation",
-                    "respawnCount", "effect", "role"
+                    "respawnCount", "hasArmor", "effect", "role"
             ));
         }
 
@@ -1000,6 +1149,10 @@ public class ConfigCommand implements SubCommand {
                 List<String> options = new ArrayList<>(Collections.singletonList("remove"));
                 options.addAll(Bukkit.getWorlds().stream().map(World::getName).collect(Collectors.toList()));
                 return KCDKCommand.filterStartingWith(args[3], options);
+            }
+
+            if ("hasarmor".equals(property) && args.length == 4) {
+                return KCDKCommand.filterStartingWith(args[3], Arrays.asList("true", "false"));
             }
         }
 
@@ -1031,7 +1184,7 @@ public class ConfigCommand implements SubCommand {
         if (args.length == 2 && !Arrays.asList("add", "remove", "clear").contains(action)) {
             return KCDKCommand.filterStartingWith(args[1], Arrays.asList(
                     "displayName", "armorColor", "readyLocation", "respawnLocation",
-                    "respawnCount", "extendsEffects", "extendsItem", "effect"
+                    "respawnCount", "hasArmor", "extendsEffects", "extendsItem", "effect"
             ));
         }
 
@@ -1053,8 +1206,10 @@ public class ConfigCommand implements SubCommand {
                 return KCDKCommand.filterStartingWith(args[2], options);
             }
 
-            if (("extendseffects".equals(property) || "extendsitem".equals(property)) && args.length == 3) {
-                return KCDKCommand.filterStartingWith(args[2], Arrays.asList("true", "false"));
+            if (("extendseffects".equals(property) || "extendsitem".equals(property) || "hasarmor".equals(property)) && args.length == 3) {
+                List<String> boolOpts = new ArrayList<>(Arrays.asList("true", "false"));
+                if ("hasarmor".equals(property)) boolOpts.add("remove");
+                return KCDKCommand.filterStartingWith(args[2], boolOpts);
             }
         }
 
@@ -1112,6 +1267,38 @@ public class ConfigCommand implements SubCommand {
         }
 
         return Collections.emptyList();
+    }
+
+    // ========== Scoreboard Team Creation ==========
+
+    private void createScoreboardTeams(GameConfig config) {
+        if (Bukkit.getScoreboardManager() == null) return;
+        Scoreboard scoreboard = Bukkit.getScoreboardManager().getMainScoreboard();
+
+        for (Team team : config.getTeams()) {
+            String sbTeamName = "kcdk." + team.getName();
+            org.bukkit.scoreboard.Team sbTeam = scoreboard.getTeam(sbTeamName);
+            if (sbTeam == null) {
+                sbTeam = scoreboard.registerNewTeam(sbTeamName);
+            }
+            // チームカラー設定
+            if (team.getArmorColor() != null) {
+                sbTeam.setColor(net.kunmc.lab.app.util.ArmorUtil.colorNameToChatColor(team.getArmorColor()));
+            }
+
+            for (Role role : team.getRoles()) {
+                String sbRoleName = "kcdk." + team.getName() + "." + role.getName();
+                org.bukkit.scoreboard.Team sbRole = scoreboard.getTeam(sbRoleName);
+                if (sbRole == null) {
+                    sbRole = scoreboard.registerNewTeam(sbRoleName);
+                }
+                // ロールカラー設定（未設定ならチームのカラーを継承）
+                String colorName = role.getArmorColor() != null ? role.getArmorColor() : team.getArmorColor();
+                if (colorName != null) {
+                    sbRole.setColor(net.kunmc.lab.app.util.ArmorUtil.colorNameToChatColor(colorName));
+                }
+            }
+        }
     }
 
     // ========== Helper Methods ==========

@@ -3,6 +3,10 @@ package net.kunmc.lab.app;
 import java.util.Objects;
 import net.kunmc.lab.app.command.KCDKCommand;
 import net.kunmc.lab.app.config.Config;
+import net.kunmc.lab.app.game.GameManager;
+import net.kunmc.lab.app.game.GameState;
+import net.kunmc.lab.app.listener.GameListener;
+import net.kunmc.lab.app.util.ScoreboardUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -14,6 +18,7 @@ public final class App extends JavaPlugin {
         Store.pluginName = this.getName();
         Store.plugin = this;
         Store.config = new Config(this);
+        Store.gameManager = new GameManager();
 
         // コマンド登録
         KCDKCommand kcdkCommand = new KCDKCommand();
@@ -22,10 +27,20 @@ public final class App extends JavaPlugin {
             command.setExecutor(kcdkCommand);
             command.setTabCompleter(kcdkCommand);
         }
+
+        // イベントリスナー登録
+        Bukkit.getPluginManager().registerEvents(new GameListener(), this);
     }
 
     @Override
     public void onDisable() {
+        // タブ名リセット
+        ScoreboardUtil.resetAllTabNames();
+
+        // ゲーム停止
+        if (Store.gameManager != null && Store.gameManager.getState() != GameState.IDLE) {
+            Store.gameManager.stop("§cサーバーが停止しました。");
+        }
     }
 
     public static void print(Object obj) {

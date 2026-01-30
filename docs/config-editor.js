@@ -61,7 +61,10 @@ const KEY_MAP = {
 
     // ExterminationEndCondition / TicketEndCondition
     team: 'N',
-    count: 'O'
+    count: 'O',
+
+    // Armor
+    hasArmor: 'P'
 };
 
 // 逆引き用マップ（デコード時に使用）
@@ -199,10 +202,12 @@ function collectTeams() {
 }
 
 function collectTeamFromCard(card) {
+    const hasArmorToggle = card.querySelector('input[name="team-has-armor"]');
     const team = {
         name: card.querySelector('input[name="team-name"]')?.value?.trim() || '',
         displayName: card.querySelector('input[name="team-display-name"]')?.value?.trim() || '',
-        armorColor: card.querySelector('input[name="team-color"]')?.value || '#ffffff',
+        armorColor: card.querySelector('select[name="team-color"]')?.value || 'WHITE',
+        hasArmor: hasArmorToggle ? hasArmorToggle.checked : true,
         respawnCount: parseInt(card.querySelector('input[name="team-respawn-count"]')?.value) || 0,
         readyLocation: collectReadyLocationFromCard(card),
         respawnLocation: collectRespawnLocationFromCard(card),
@@ -270,11 +275,13 @@ function collectRolesFromCard(card) {
 function collectRoleFromCard(card) {
     const inheritColor = card.querySelector('input[name="role-inherit-color"]')?.checked;
     const inheritRespawn = card.querySelector('input[name="role-inherit-respawn"]')?.checked;
+    const inheritHasArmor = card.querySelector('input[name="role-inherit-has-armor"]')?.checked;
 
     const role = {
         name: card.querySelector('input[name="role-name"]')?.value?.trim() || '',
         displayName: card.querySelector('input[name="role-display-name"]')?.value?.trim() || null,
-        armorColor: inheritColor ? null : (card.querySelector('input[name="role-color"]')?.value || null),
+        armorColor: inheritColor ? null : (card.querySelector('select[name="role-color"]')?.value || null),
+        hasArmor: inheritHasArmor ? null : (card.querySelector('input[name="role-has-armor"]')?.checked ?? null),
         readyLocation: null,
         respawnLocation: null,
         respawnCount: inheritRespawn ? null : (parseInt(card.querySelector('input[name="role-respawn-count"]')?.value) ?? null),
@@ -411,15 +418,83 @@ function showToast(message, type = 'success') {
 async function generateAndCopyCommand() {
     const config = collectConfig();
     const encoded = encodeConfig(config);
-    const command = `/kcdk config import ${encoded}`;
 
-    try {
-        await navigator.clipboard.writeText(command);
-        showToast('コマンドをクリップボードにコピーしました');
-    } catch (err) {
-        console.error('クリップボードへのコピーに失敗:', err);
-        showToast('コピーに失敗しました', 'error');
+    const MAX_CHUNK_SIZE = 200;
+
+    if (encoded.length <= MAX_CHUNK_SIZE) {
+        // 従来通り1コマンドでコピー
+        const command = `/kcdk config import ${encoded}`;
+        try {
+            await navigator.clipboard.writeText(command);
+            showToast('コマンドをクリップボードにコピーしました');
+        } catch (err) {
+            console.error('クリップボードへのコピーに失敗:', err);
+            showToast('コピーに失敗しました', 'error');
+        }
+        return;
     }
+
+    // 分割コマンドを生成
+    const chunks = [];
+    for (let i = 0; i < encoded.length; i += MAX_CHUNK_SIZE) {
+        chunks.push(encoded.substring(i, i + MAX_CHUNK_SIZE));
+    }
+
+    const totalParts = chunks.length;
+    const commands = chunks.map((chunk, index) =>
+        `/kcdk config import-part ${index + 1}/${totalParts} ${chunk}`
+    );
+
+    showCommandModal(commands);
+}
+
+function showCommandModal(commands) {
+    const list = document.getElementById('command-list');
+    list.innerHTML = '';
+
+    commands.forEach((cmd, index) => {
+        const item = document.createElement('div');
+        item.className = 'flex items-center gap-2 p-3 bg-gray-50 rounded-lg border border-gray-200';
+
+        const label = document.createElement('span');
+        label.className = 'text-xs font-semibold text-gray-500 shrink-0';
+        label.textContent = `${index + 1}/${commands.length}`;
+
+        const code = document.createElement('code');
+        code.className = 'text-sm text-gray-800 break-all flex-1';
+        code.textContent = cmd;
+
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'shrink-0 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-indigo-700';
+        btn.textContent = 'コピー';
+        btn.addEventListener('click', async () => {
+            try {
+                await navigator.clipboard.writeText(cmd);
+                btn.textContent = '✓';
+                btn.classList.remove('bg-indigo-600', 'hover:bg-indigo-700');
+                btn.classList.add('bg-green-600');
+                setTimeout(() => {
+                    btn.textContent = 'コピー';
+                    btn.classList.remove('bg-green-600');
+                    btn.classList.add('bg-indigo-600', 'hover:bg-indigo-700');
+                }, 1500);
+            } catch (err) {
+                showToast('コピーに失敗しました', 'error');
+            }
+        });
+
+        item.appendChild(label);
+        item.appendChild(code);
+        item.appendChild(btn);
+        list.appendChild(item);
+    });
+
+    document.getElementById('command-modal').classList.remove('hidden');
+}
+
+function closeCommandModal() {
+    document.getElementById('command-modal').classList.add('hidden');
 }
 
 // デバッグ用：コンソールでキー対応表を確認可能
@@ -598,7 +673,7 @@ function validateRoleCard(card, teamNumber, roleNumber) {
     // 継承していない場合は各項目必須
     // アーマーカラー
     const colorInherit = card.querySelector('input[name="role-inherit-color"]');
-    const colorInput = card.querySelector('input[name="role-color"]');
+    const colorInput = card.querySelector('select[name="role-color"]');
     if (colorInherit && !colorInherit.checked && colorInput && !colorInput.value) {
         errors.push({ section, message: 'アーマーカラーは必須です', input: colorInput });
     }
@@ -803,7 +878,7 @@ function setupToggleDisable(toggleId, targetIds) {
 }
 
 // チーム管理
-const defaultColors = ['#ef4444', '#3b82f6', '#22c55e', '#eab308', '#a855f7', '#ec4899', '#14b8a6', '#f97316'];
+const defaultColors = ['RED', 'BLUE', 'GREEN', 'YELLOW', 'LIGHT_PURPLE', 'GOLD', 'AQUA', 'DARK_GREEN'];
 
 // アーマーカラーを薄くした背景色を生成
 function hexToRgba(hex, alpha) {
@@ -813,21 +888,28 @@ function hexToRgba(hex, alpha) {
     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
+const MC_COLOR_HEX = {
+    BLACK: '#1d1d21', DARK_BLUE: '#3c44aa', DARK_GREEN: '#5e7c16', DARK_AQUA: '#169c9c',
+    DARK_RED: '#b02e26', DARK_PURPLE: '#8932b8', GOLD: '#f9801d', GRAY: '#9d9d97',
+    DARK_GRAY: '#474f52', BLUE: '#3ab3da', GREEN: '#80c71f', AQUA: '#3ab3da',
+    RED: '#b02e26', LIGHT_PURPLE: '#c74ebd', YELLOW: '#fed83d', WHITE: '#f9fffe'
+};
+
 // チームカードの背景色を更新
 function updateTeamCardBackground(card) {
-    const colorInput = card.querySelector('input[name="team-color"]');
+    const colorInput = card.querySelector('select[name="team-color"]');
     if (colorInput) {
-        const color = colorInput.value;
-        card.style.backgroundColor = hexToRgba(color, 0.1);
-        card.style.borderColor = hexToRgba(color, 0.3);
+        const hex = MC_COLOR_HEX[colorInput.value] || '#f9fffe';
+        card.style.backgroundColor = hexToRgba(hex, 0.1);
+        card.style.borderColor = hexToRgba(hex, 0.3);
     }
 }
 
 // アーマーカラー変更時のイベント設定
 function setupTeamColorChange(card) {
-    const colorInput = card.querySelector('input[name="team-color"]');
+    const colorInput = card.querySelector('select[name="team-color"]');
     if (colorInput) {
-        colorInput.addEventListener('input', () => {
+        colorInput.addEventListener('change', () => {
             updateTeamCardBackground(card);
         });
         // 初期背景色を設定
@@ -888,11 +970,35 @@ function createTeamCard(teamNumber) {
                 </div>
                 <div>
                     <label class="mb-2 block text-sm font-semibold text-gray-800">アーマーカラー</label>
-                    <input type="color" name="team-color" value="${defaultColors[colorIndex]}" class="h-10 w-full rounded-xl border border-gray-300 cursor-pointer" />
+                    <select name="team-color" class="block w-full rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-gray-800 shadow-sm transition focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/20">
+                        <option value="BLACK">BLACK</option>
+                        <option value="DARK_BLUE">DARK_BLUE</option>
+                        <option value="DARK_GREEN">DARK_GREEN</option>
+                        <option value="DARK_AQUA">DARK_AQUA</option>
+                        <option value="DARK_RED">DARK_RED</option>
+                        <option value="DARK_PURPLE">DARK_PURPLE</option>
+                        <option value="GOLD">GOLD</option>
+                        <option value="GRAY">GRAY</option>
+                        <option value="DARK_GRAY">DARK_GRAY</option>
+                        <option value="BLUE">BLUE</option>
+                        <option value="GREEN">GREEN</option>
+                        <option value="AQUA">AQUA</option>
+                        <option value="RED" selected>RED</option>
+                        <option value="LIGHT_PURPLE">LIGHT_PURPLE</option>
+                        <option value="YELLOW">YELLOW</option>
+                        <option value="WHITE">WHITE</option>
+                    </select>
                 </div>
                 <div>
                     <label class="mb-2 block text-sm font-semibold text-gray-800">リスポーン可能回数(-1=無限)</label>
                     <input type="number" name="team-respawn-count" min="-1" placeholder="-1 = 無限" value="0" class="block w-full rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-gray-800 shadow-sm transition placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/20" />
+                </div>
+                <div class="flex items-center justify-between">
+                    <label class="text-sm font-semibold text-gray-800">防具を装備する</label>
+                    <label class="inline-flex cursor-pointer items-center">
+                        <input type="checkbox" name="team-has-armor" class="peer sr-only" checked />
+                        <div class="relative h-5 w-9 rounded-full bg-gray-300 transition-colors duration-200 peer-checked:bg-indigo-600 after:absolute after:left-0.5 after:top-0.5 after:h-4 after:w-4 after:rounded-full after:bg-white after:transition-transform after:duration-200 peer-checked:after:translate-x-4"></div>
+                    </label>
                 </div>
             </div>
 
@@ -1007,6 +1113,12 @@ function createTeamCard(teamNumber) {
 
     // ロール管理のイベント
     setupRoleManagement(card);
+
+    // デフォルトカラー設定
+    const colorSelect = card.querySelector('select[name="team-color"]');
+    if (colorSelect) {
+        colorSelect.value = defaultColors[colorIndex];
+    }
 
     // アーマーカラー背景色の設定
     setupTeamColorChange(card);
@@ -1200,7 +1312,38 @@ function createRoleCard() {
                             <div class="relative h-4 w-7 rounded-full bg-gray-300 transition-colors duration-200 peer-checked:bg-indigo-600 after:absolute after:left-0.5 after:top-0.5 after:h-3 after:w-3 after:rounded-full after:bg-white after:transition-transform after:duration-200 peer-checked:after:translate-x-3"></div>
                         </label>
                     </div>
-                    <input type="color" name="role-color" value="#6b7280" class="role-inherit-field h-8 w-full rounded-lg border border-gray-300 cursor-pointer opacity-50 cursor-not-allowed" disabled />
+                    <select name="role-color" class="role-inherit-field block w-full rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-800 opacity-50 cursor-not-allowed" disabled>
+                        <option value="BLACK">BLACK</option>
+                        <option value="DARK_BLUE">DARK_BLUE</option>
+                        <option value="DARK_GREEN">DARK_GREEN</option>
+                        <option value="DARK_AQUA">DARK_AQUA</option>
+                        <option value="DARK_RED">DARK_RED</option>
+                        <option value="DARK_PURPLE">DARK_PURPLE</option>
+                        <option value="GOLD">GOLD</option>
+                        <option value="GRAY">GRAY</option>
+                        <option value="DARK_GRAY">DARK_GRAY</option>
+                        <option value="BLUE">BLUE</option>
+                        <option value="GREEN">GREEN</option>
+                        <option value="AQUA">AQUA</option>
+                        <option value="RED" selected>RED</option>
+                        <option value="LIGHT_PURPLE">LIGHT_PURPLE</option>
+                        <option value="YELLOW">YELLOW</option>
+                        <option value="WHITE">WHITE</option>
+                    </select>
+                </div>
+                <div class="role-inherit-section" data-field="has-armor">
+                    <div class="flex items-center justify-between mb-1">
+                        <label class="text-xs font-semibold text-gray-600">防具を装備する</label>
+                        <label class="inline-flex cursor-pointer items-center gap-1">
+                            <span class="text-xs text-gray-400">所属チームの設定を継承</span>
+                            <input type="checkbox" name="role-inherit-has-armor" class="peer sr-only role-inherit-toggle" checked />
+                            <div class="relative h-4 w-7 rounded-full bg-gray-300 transition-colors duration-200 peer-checked:bg-indigo-600 after:absolute after:left-0.5 after:top-0.5 after:h-3 after:w-3 after:rounded-full after:bg-white after:transition-transform after:duration-200 peer-checked:after:translate-x-3"></div>
+                        </label>
+                    </div>
+                    <label class="role-inherit-field inline-flex cursor-pointer items-center opacity-50">
+                        <input type="checkbox" name="role-has-armor" class="peer sr-only" checked disabled />
+                        <div class="relative h-4 w-7 rounded-full bg-gray-300 transition-colors duration-200 peer-checked:bg-indigo-600 after:absolute after:left-0.5 after:top-0.5 after:h-3 after:w-3 after:rounded-full after:bg-white after:transition-transform after:duration-200 peer-checked:after:translate-x-3"></div>
+                    </label>
                 </div>
                 <div class="role-inherit-section" data-field="respawn">
                     <div class="flex items-center justify-between mb-1">
@@ -1696,10 +1839,10 @@ function setupEndConditionManagement() {
 
 // チーム基本設定
 const teamPresets = [
-    { name: 'red', displayName: '赤チーム', color: '#ef4444' },
-    { name: 'blue', displayName: '青チーム', color: '#3b82f6' },
-    { name: 'green', displayName: '緑チーム', color: '#22c55e' },
-    { name: 'yellow', displayName: '黄チーム', color: '#eab308' }
+    { name: 'red', displayName: '赤チーム', color: 'RED' },
+    { name: 'blue', displayName: '青チーム', color: 'BLUE' },
+    { name: 'green', displayName: '緑チーム', color: 'GREEN' },
+    { name: 'yellow', displayName: '黄チーム', color: 'YELLOW' }
 ];
 
 // 待機時間デフォルト（3分）
@@ -1908,7 +2051,7 @@ function applyQuickSetup() {
             // チーム名・表示名・カラー設定
             const nameInput = newCard.querySelector('input[name="team-name"]');
             const displayNameInput = newCard.querySelector('input[name="team-display-name"]');
-            const colorInput = newCard.querySelector('input[name="team-color"]');
+            const colorInput = newCard.querySelector('select[name="team-color"]');
             const respawnInput = newCard.querySelector('input[name="team-respawn-count"]');
 
             if (nameInput) nameInput.value = preset.name;
@@ -2127,7 +2270,410 @@ function setupCommandManagement() {
     }
 }
 
+// ========== localStorage 永続化 ==========
+
+const STORAGE_KEY = 'kcdk-config-editor-state';
+
+function collectFullState() {
+    const state = {
+        gamemode: document.getElementById('gamemode')?.value || 'ADVENTURE',
+        bossbarDisable: document.getElementById('bossbar-disable')?.checked || false,
+        bossbarMcid: document.getElementById('bossbar-mcid')?.value || '',
+        timelimitDisable: document.getElementById('timelimit-disable')?.checked || false,
+        timelimitHours: document.getElementById('timelimit-hours')?.value || '0',
+        timelimitMinutes: document.getElementById('timelimit-minutes')?.value || '0',
+        timelimitSeconds: document.getElementById('timelimit-seconds')?.value || '0',
+        startupCommands: [],
+        shutdownCommands: [],
+        teams: [],
+        endConditions: []
+    };
+
+    // コマンド収集
+    document.querySelectorAll('#startup-commands-container input[name="startup-command"]').forEach(input => {
+        state.startupCommands.push(input.value);
+    });
+    document.querySelectorAll('#shutdown-commands-container input[name="shutdown-command"]').forEach(input => {
+        state.shutdownCommands.push(input.value);
+    });
+
+    // チーム収集（UI状態含む）
+    document.querySelectorAll('.team-card').forEach(card => {
+        const team = {
+            name: card.querySelector('input[name="team-name"]')?.value || '',
+            displayName: card.querySelector('input[name="team-display-name"]')?.value || '',
+            armorColor: card.querySelector('select[name="team-color"]')?.value || 'WHITE',
+            hasArmor: card.querySelector('input[name="team-has-armor"]')?.checked ?? true,
+            respawnCount: card.querySelector('input[name="team-respawn-count"]')?.value || '0',
+            lobbyDisable: card.querySelector('.team-lobby-toggle')?.checked || false,
+            lobbyWorld: card.querySelector('input[name="team-lobby-world"]')?.value || 'world',
+            lobbyX: card.querySelector('input[name="team-lobby-x"]')?.value || '0',
+            lobbyY: card.querySelector('input[name="team-lobby-y"]')?.value || '64',
+            lobbyZ: card.querySelector('input[name="team-lobby-z"]')?.value || '0',
+            lobbyYaw: card.querySelector('input[name="team-lobby-yaw"]')?.value || '0',
+            lobbyPitch: card.querySelector('input[name="team-lobby-pitch"]')?.value || '180',
+            lobbyHours: card.querySelector('input[name="team-lobby-hours"]')?.value || '0',
+            lobbyMinutes: card.querySelector('input[name="team-lobby-minutes"]')?.value || '3',
+            lobbySeconds: card.querySelector('input[name="team-lobby-seconds"]')?.value || '0',
+            respawnWorld: card.querySelector('input[name="team-respawn-world"]')?.value || 'world',
+            respawnX: card.querySelector('input[name="team-respawn-x"]')?.value || '0',
+            respawnY: card.querySelector('input[name="team-respawn-y"]')?.value || '64',
+            respawnZ: card.querySelector('input[name="team-respawn-z"]')?.value || '0',
+            respawnYaw: card.querySelector('input[name="team-respawn-yaw"]')?.value || '0',
+            respawnPitch: card.querySelector('input[name="team-respawn-pitch"]')?.value || '180',
+            effects: [],
+            roles: []
+        };
+
+        // エフェクト
+        card.querySelectorAll('.effect-card').forEach(ec => {
+            team.effects.push({
+                name: ec.querySelector('select[name="effect-name"]')?.value || '',
+                duration: ec.querySelector('input[name="effect-duration"]')?.value || '',
+                level: ec.querySelector('input[name="effect-level"]')?.value || ''
+            });
+        });
+
+        // ロール
+        card.querySelectorAll('.role-card').forEach(rc => {
+            const role = {
+                name: rc.querySelector('input[name="role-name"]')?.value || '',
+                displayName: rc.querySelector('input[name="role-display-name"]')?.value || '',
+                inheritColor: rc.querySelector('input[name="role-inherit-color"]')?.checked ?? true,
+                color: rc.querySelector('select[name="role-color"]')?.value || 'RED',
+                inheritHasArmor: rc.querySelector('input[name="role-inherit-has-armor"]')?.checked ?? true,
+                hasArmor: rc.querySelector('input[name="role-has-armor"]')?.checked ?? true,
+                inheritRespawn: rc.querySelector('input[name="role-inherit-respawn"]')?.checked ?? true,
+                respawnCount: rc.querySelector('input[name="role-respawn-count"]')?.value || '0',
+                inheritLobby: rc.querySelector('input[name="role-inherit-lobby"]')?.checked ?? true,
+                lobbyWorld: rc.querySelector('input[name="role-lobby-world"]')?.value || 'world',
+                lobbyX: rc.querySelector('input[name="role-lobby-x"]')?.value || '',
+                lobbyY: rc.querySelector('input[name="role-lobby-y"]')?.value || '',
+                lobbyZ: rc.querySelector('input[name="role-lobby-z"]')?.value || '',
+                lobbyYaw: rc.querySelector('input[name="role-lobby-yaw"]')?.value || '',
+                lobbyPitch: rc.querySelector('input[name="role-lobby-pitch"]')?.value || '',
+                lobbyHours: rc.querySelector('input[name="role-lobby-hours"]')?.value || '',
+                lobbyMinutes: rc.querySelector('input[name="role-lobby-minutes"]')?.value || '',
+                lobbySeconds: rc.querySelector('input[name="role-lobby-seconds"]')?.value || '',
+                inheritRespawnLoc: rc.querySelector('input[name="role-inherit-respawn-loc"]')?.checked ?? true,
+                respawnWorld: rc.querySelector('input[name="role-respawn-world"]')?.value || 'world',
+                respawnX: rc.querySelector('input[name="role-respawn-x"]')?.value || '',
+                respawnY: rc.querySelector('input[name="role-respawn-y"]')?.value || '',
+                respawnZ: rc.querySelector('input[name="role-respawn-z"]')?.value || '',
+                respawnYaw: rc.querySelector('input[name="role-respawn-yaw"]')?.value || '',
+                respawnPitch: rc.querySelector('input[name="role-respawn-pitch"]')?.value || '',
+                inheritEffects: rc.querySelector('input[name="role-inherit-effects"]')?.checked ?? true,
+                extendsEffects: rc.querySelector('input[name="role-extends-effects"]')?.checked || false,
+                extendsItem: rc.querySelector('input[name="role-extends-item"]')?.checked || false,
+                effects: []
+            };
+            rc.querySelectorAll('.role-effect-card').forEach(rec => {
+                role.effects.push({
+                    name: rec.querySelector('select[name="role-effect-name"]')?.value || '',
+                    duration: rec.querySelector('input[name="role-effect-duration"]')?.value || '',
+                    level: rec.querySelector('input[name="role-effect-level"]')?.value || ''
+                });
+            });
+            team.roles.push(role);
+        });
+
+        state.teams.push(team);
+    });
+
+    // 終了条件収集
+    document.querySelectorAll('.end-condition-card').forEach(card => {
+        const type = card.querySelector('.end-condition-type-select')?.value || 'Beacon';
+        const cond = {
+            type,
+            message: card.querySelector('input[name="end-condition-message"]')?.value || '',
+            // Beacon
+            beaconWorld: card.querySelector('input[name="beacon-world"]')?.value || 'world',
+            beaconX: card.querySelector('input[name="beacon-x"]')?.value || '0',
+            beaconY: card.querySelector('input[name="beacon-y"]')?.value || '64',
+            beaconZ: card.querySelector('input[name="beacon-z"]')?.value || '0',
+            beaconHitpoint: card.querySelector('input[name="beacon-hitpoint"]')?.value || '100',
+            // Extermination
+            exterminationTeam: card.querySelector('input[name="extermination-team"]')?.value || '',
+            // Ticket
+            ticketTeam: card.querySelector('input[name="ticket-team"]')?.value || '',
+            ticketCount: card.querySelector('input[name="ticket-count"]')?.value || '100',
+            // Composite
+            compositeConditions: []
+        };
+
+        card.querySelectorAll('.composite-condition-card').forEach(sc => {
+            cond.compositeConditions.push({
+                type: sc.querySelector('.composite-sub-type-select')?.value || 'Beacon',
+                beaconWorld: sc.querySelector('input[name="composite-beacon-world"]')?.value || 'world',
+                beaconX: sc.querySelector('input[name="composite-beacon-x"]')?.value || '0',
+                beaconY: sc.querySelector('input[name="composite-beacon-y"]')?.value || '64',
+                beaconZ: sc.querySelector('input[name="composite-beacon-z"]')?.value || '0',
+                beaconYaw: sc.querySelector('input[name="composite-beacon-yaw"]')?.value || '0',
+                beaconPitch: sc.querySelector('input[name="composite-beacon-pitch"]')?.value || '180',
+                beaconHp: sc.querySelector('input[name="composite-beacon-hp"]')?.value || '100',
+                exterminationTeam: sc.querySelector('input[name="composite-extermination-team"]')?.value || '',
+                ticketTeam: sc.querySelector('input[name="composite-ticket-team"]')?.value || '',
+                ticketCount: sc.querySelector('input[name="composite-ticket-count"]')?.value || '100'
+            });
+        });
+
+        state.endConditions.push(cond);
+    });
+
+    return state;
+}
+
+let saveTimeout = null;
+function saveStateToLocalStorage() {
+    if (saveTimeout) clearTimeout(saveTimeout);
+    saveTimeout = setTimeout(() => {
+        try {
+            const state = collectFullState();
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        } catch (e) {
+            // ignore
+        }
+    }, 300);
+}
+
+function restoreStateFromLocalStorage() {
+    let state;
+    try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return false;
+        state = JSON.parse(raw);
+    } catch (e) {
+        return false;
+    }
+
+    // 基本フィールド
+    const gamemode = document.getElementById('gamemode');
+    if (gamemode) gamemode.value = state.gamemode || 'ADVENTURE';
+
+    const bossbarDisable = document.getElementById('bossbar-disable');
+    if (bossbarDisable) bossbarDisable.checked = state.bossbarDisable || false;
+
+    const bossbarMcid = document.getElementById('bossbar-mcid');
+    if (bossbarMcid) bossbarMcid.value = state.bossbarMcid || '';
+
+    const timelimitDisable = document.getElementById('timelimit-disable');
+    if (timelimitDisable) timelimitDisable.checked = state.timelimitDisable || false;
+
+    const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+    setVal('timelimit-hours', state.timelimitHours || '0');
+    setVal('timelimit-minutes', state.timelimitMinutes || '0');
+    setVal('timelimit-seconds', state.timelimitSeconds || '0');
+
+    // コマンド復元
+    (state.startupCommands || []).forEach(cmd => {
+        createCommandInput('startup-commands-container', cmd);
+    });
+    (state.shutdownCommands || []).forEach(cmd => {
+        createCommandInput('shutdown-commands-container', cmd);
+    });
+
+    // 既存のチームカードを削除
+    document.querySelectorAll('.team-card').forEach(c => c.remove());
+
+    // チーム復元
+    const teamsContainer = document.getElementById('teams-container');
+    const addTeamBtn = document.getElementById('add-team-btn');
+    (state.teams || []).forEach((team, index) => {
+        const card = createTeamCard(index + 1);
+        teamsContainer.insertBefore(card, addTeamBtn);
+
+        // 基本情報
+        const setInput = (name, val) => { const el = card.querySelector(`input[name="${name}"]`); if (el) el.value = val; };
+        setInput('team-name', team.name || '');
+        setInput('team-display-name', team.displayName || '');
+        const teamColorSelect = card.querySelector('select[name="team-color"]');
+        if (teamColorSelect) teamColorSelect.value = team.armorColor || 'WHITE';
+        const hasArmorToggle = card.querySelector('input[name="team-has-armor"]');
+        if (hasArmorToggle) hasArmorToggle.checked = team.hasArmor ?? true;
+        setInput('team-respawn-count', team.respawnCount || '0');
+
+        // 待機地点トグル
+        const lobbyToggle = card.querySelector('.team-lobby-toggle');
+        if (lobbyToggle) {
+            lobbyToggle.checked = team.lobbyDisable || false;
+            lobbyToggle.dispatchEvent(new Event('change'));
+        }
+
+        setInput('team-lobby-world', team.lobbyWorld || 'world');
+        setInput('team-lobby-x', team.lobbyX || '0');
+        setInput('team-lobby-y', team.lobbyY || '64');
+        setInput('team-lobby-z', team.lobbyZ || '0');
+        setInput('team-lobby-yaw', team.lobbyYaw || '0');
+        setInput('team-lobby-pitch', team.lobbyPitch || '180');
+        setInput('team-lobby-hours', team.lobbyHours || '0');
+        setInput('team-lobby-minutes', team.lobbyMinutes || '3');
+        setInput('team-lobby-seconds', team.lobbySeconds || '0');
+
+        setInput('team-respawn-world', team.respawnWorld || 'world');
+        setInput('team-respawn-x', team.respawnX || '0');
+        setInput('team-respawn-y', team.respawnY || '64');
+        setInput('team-respawn-z', team.respawnZ || '0');
+        setInput('team-respawn-yaw', team.respawnYaw || '0');
+        setInput('team-respawn-pitch', team.respawnPitch || '180');
+
+        // 背景色更新
+        updateTeamCardBackground(card);
+
+        // エフェクト復元
+        const effectsContainer = card.querySelector('.effects-container');
+        const addEffectBtn = card.querySelector('.add-effect-btn');
+        (team.effects || []).forEach(eff => {
+            const row = createEffectRow();
+            effectsContainer.insertBefore(row, addEffectBtn);
+            const sel = row.querySelector('select[name="effect-name"]');
+            if (sel) sel.value = eff.name || '';
+            const dur = row.querySelector('input[name="effect-duration"]');
+            if (dur) dur.value = eff.duration || '';
+            const lvl = row.querySelector('input[name="effect-level"]');
+            if (lvl) lvl.value = eff.level || '';
+        });
+
+        // ロール復元
+        const rolesContainer = card.querySelector('.roles-container');
+        const addRoleBtn = card.querySelector('.add-role-btn');
+        (team.roles || []).forEach(role => {
+            const rc = createRoleCard();
+            rolesContainer.insertBefore(rc, addRoleBtn);
+
+            const setRoleInput = (name, val) => { const el = rc.querySelector(`input[name="${name}"]`); if (el) el.value = val; };
+            const setRoleCheck = (name, val) => { const el = rc.querySelector(`input[name="${name}"]`); if (el) el.checked = val; };
+
+            setRoleInput('role-name', role.name || '');
+            setRoleInput('role-display-name', role.displayName || '');
+            setRoleCheck('role-inherit-color', role.inheritColor ?? true);
+            const roleColorSelect = rc.querySelector('select[name="role-color"]');
+            if (roleColorSelect) roleColorSelect.value = role.color || 'RED';
+            setRoleCheck('role-inherit-has-armor', role.inheritHasArmor ?? true);
+            setRoleCheck('role-has-armor', role.hasArmor ?? true);
+            setRoleCheck('role-inherit-respawn', role.inheritRespawn ?? true);
+            setRoleInput('role-respawn-count', role.respawnCount || '0');
+            setRoleCheck('role-inherit-lobby', role.inheritLobby ?? true);
+            setRoleInput('role-lobby-world', role.lobbyWorld || 'world');
+            setRoleInput('role-lobby-x', role.lobbyX || '');
+            setRoleInput('role-lobby-y', role.lobbyY || '');
+            setRoleInput('role-lobby-z', role.lobbyZ || '');
+            setRoleInput('role-lobby-yaw', role.lobbyYaw || '');
+            setRoleInput('role-lobby-pitch', role.lobbyPitch || '');
+            setRoleInput('role-lobby-hours', role.lobbyHours || '');
+            setRoleInput('role-lobby-minutes', role.lobbyMinutes || '');
+            setRoleInput('role-lobby-seconds', role.lobbySeconds || '');
+            setRoleCheck('role-inherit-respawn-loc', role.inheritRespawnLoc ?? true);
+            setRoleInput('role-respawn-world', role.respawnWorld || 'world');
+            setRoleInput('role-respawn-x', role.respawnX || '');
+            setRoleInput('role-respawn-y', role.respawnY || '');
+            setRoleInput('role-respawn-z', role.respawnZ || '');
+            setRoleInput('role-respawn-yaw', role.respawnYaw || '');
+            setRoleInput('role-respawn-pitch', role.respawnPitch || '');
+            setRoleCheck('role-inherit-effects', role.inheritEffects ?? true);
+            setRoleCheck('role-extends-effects', role.extendsEffects || false);
+            setRoleCheck('role-extends-item', role.extendsItem || false);
+
+            // 継承トグルの状態を反映
+            rc.querySelectorAll('.role-inherit-toggle').forEach(t => t.dispatchEvent(new Event('change')));
+
+            // ロールエフェクト復元
+            const roleEffectsContainer = rc.querySelector('.role-effects-container');
+            const addRoleEffectBtn = rc.querySelector('.add-role-effect-btn');
+            (role.effects || []).forEach(eff => {
+                const row = createRoleEffectRow();
+                roleEffectsContainer.insertBefore(row, addRoleEffectBtn);
+                const sel = row.querySelector('select[name="role-effect-name"]');
+                if (sel) sel.value = eff.name || '';
+                const dur = row.querySelector('input[name="role-effect-duration"]');
+                if (dur) dur.value = eff.duration || '';
+                const lvl = row.querySelector('input[name="role-effect-level"]');
+                if (lvl) lvl.value = eff.level || '';
+            });
+        });
+    });
+    updateDeleteButtons();
+
+    // 終了条件復元
+    document.querySelectorAll('.end-condition-card').forEach(c => c.remove());
+    const endContainer = document.getElementById('end-conditions-container');
+    const addEndBtn = document.getElementById('add-end-condition-btn');
+    (state.endConditions || []).forEach((cond, index) => {
+        const card = createEndConditionCard(index + 1);
+        endContainer.insertBefore(card, addEndBtn);
+
+        const typeSelect = card.querySelector('.end-condition-type-select');
+        if (typeSelect) {
+            typeSelect.value = cond.type || 'Beacon';
+            typeSelect.dispatchEvent(new Event('change'));
+        }
+
+        const setInput = (name, val) => { const el = card.querySelector(`input[name="${name}"]`); if (el) el.value = val; };
+        setInput('end-condition-message', cond.message || '');
+        setInput('beacon-world', cond.beaconWorld || 'world');
+        setInput('beacon-x', cond.beaconX || '0');
+        setInput('beacon-y', cond.beaconY || '64');
+        setInput('beacon-z', cond.beaconZ || '0');
+        setInput('beacon-hitpoint', cond.beaconHitpoint || '100');
+        setInput('extermination-team', cond.exterminationTeam || '');
+        setInput('ticket-team', cond.ticketTeam || '');
+        setInput('ticket-count', cond.ticketCount || '100');
+
+        // Composite条件復元
+        const compositeContainer = card.querySelector('.composite-conditions-container');
+        const addCompositeBtn = card.querySelector('.add-composite-condition-btn');
+        (cond.compositeConditions || []).forEach(sc => {
+            const subCard = createCompositeConditionCard();
+            compositeContainer.insertBefore(subCard, addCompositeBtn);
+
+            const subTypeSelect = subCard.querySelector('.composite-sub-type-select');
+            if (subTypeSelect) {
+                subTypeSelect.value = sc.type || 'Beacon';
+                subTypeSelect.dispatchEvent(new Event('change'));
+            }
+
+            const setSubInput = (name, val) => { const el = subCard.querySelector(`input[name="${name}"]`); if (el) el.value = val; };
+            setSubInput('composite-beacon-world', sc.beaconWorld || 'world');
+            setSubInput('composite-beacon-x', sc.beaconX || '0');
+            setSubInput('composite-beacon-y', sc.beaconY || '64');
+            setSubInput('composite-beacon-z', sc.beaconZ || '0');
+            setSubInput('composite-beacon-yaw', sc.beaconYaw || '0');
+            setSubInput('composite-beacon-pitch', sc.beaconPitch || '180');
+            setSubInput('composite-beacon-hp', sc.beaconHp || '100');
+            setSubInput('composite-extermination-team', sc.exterminationTeam || '');
+            setSubInput('composite-ticket-team', sc.ticketTeam || '');
+            setSubInput('composite-ticket-count', sc.ticketCount || '100');
+        });
+    });
+
+    return true;
+}
+
+function setupAutoSave() {
+    document.addEventListener('input', saveStateToLocalStorage);
+    document.addEventListener('change', saveStateToLocalStorage);
+
+    // DOM変更（カード追加/削除）を監視
+    const observer = new MutationObserver(() => saveStateToLocalStorage());
+    const targets = ['teams-container', 'end-conditions-container', 'startup-commands-container', 'shutdown-commands-container'];
+    targets.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) observer.observe(el, { childList: true, subtree: true });
+    });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+    setupCommandManagement();
+
+    const restored = restoreStateFromLocalStorage();
+
+    if (!restored) {
+        // 初回: 既存HTMLのチームカードにイベント設定
+        document.querySelectorAll('.team-card').forEach(card => {
+            setupEffectManagement(card);
+            setupRoleManagement(card);
+        });
+    }
+
     setupToggleDisable('bossbar-disable', ['bossbar-mcid']);
     setupToggleDisable('timelimit-disable', ['timelimit-hours', 'timelimit-minutes', 'timelimit-seconds']);
     setupTeamManagement();
@@ -2135,11 +2681,6 @@ document.addEventListener('DOMContentLoaded', () => {
     setupQuickSetupModal();
     setupGenerateCommandButton();
     setupValidationListeners();
-    setupCommandManagement();
 
-    // 既存のチームカードにエフェクト管理とロール管理を設定
-    document.querySelectorAll('.team-card').forEach(card => {
-        setupEffectManagement(card);
-        setupRoleManagement(card);
-    });
+    setupAutoSave();
 });

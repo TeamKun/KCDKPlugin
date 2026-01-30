@@ -3,9 +3,11 @@ package net.kunmc.lab.app.command.subcommand;
 import net.kunmc.lab.app.Store;
 import net.kunmc.lab.app.command.KCDKCommand;
 import net.kunmc.lab.app.command.SubCommand;
+import net.kunmc.lab.app.util.ScoreboardUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.Team;
 
 import java.util.*;
@@ -29,20 +31,14 @@ public class TeamCommand implements SubCommand {
 
         switch (action) {
             case "assign":
-                // TODO: チーム自動割り当て処理を実装
-                sender.sendMessage("§aTeam assign command executed (not implemented yet)");
-                return true;
+                return handleAssign(sender);
 
             case "change":
                 if (args.length < 3) {
                     sender.sendMessage("§cUsage: /kcdk team change <player> <team>");
                     return true;
                 }
-                // TODO: チーム変更処理を実装
-                String playerName = args[1];
-                String teamName = args[2];
-                sender.sendMessage("§aTeam change command executed for " + playerName + " to " + teamName + " (not implemented yet)");
-                return true;
+                return handleChange(sender, args[1], args[2]);
 
             default:
                 sender.sendMessage("§cUnknown action: " + action);
@@ -50,10 +46,83 @@ public class TeamCommand implements SubCommand {
         }
     }
 
+    private boolean handleAssign(CommandSender sender) {
+        Scoreboard scoreboard = ScoreboardUtil.getMainScoreboard();
+        if (scoreboard == null) {
+            sender.sendMessage("§cScoreboardが利用できません。");
+            return true;
+        }
+
+        // kcdk.で始まるチーム（ロールチームを除く）
+        List<Team> kcdkTeams = scoreboard.getTeams().stream()
+                .filter(t -> t.getName().startsWith("kcdk."))
+                .filter(t -> t.getName().chars().filter(c -> c == '.').count() == 1)
+                .collect(Collectors.toList());
+
+        if (kcdkTeams.isEmpty()) {
+            sender.sendMessage("§ckcdk.で始まるScoreboardチームが見つかりません。先にconfigをimportしてください。");
+            return true;
+        }
+
+        List<Player> onlinePlayers = new ArrayList<>(Bukkit.getOnlinePlayers());
+        if (onlinePlayers.isEmpty()) {
+            sender.sendMessage("§cオンラインプレイヤーがいません。");
+            return true;
+        }
+
+        // 既存のkcdk.チームからプレイヤーを除去
+        for (Team team : scoreboard.getTeams()) {
+            if (team.getName().startsWith("kcdk.")) {
+                for (String entry : new ArrayList<>(team.getEntries())) {
+                    team.removeEntry(entry);
+                }
+            }
+        }
+
+        // シャッフルして均等分配
+        Collections.shuffle(onlinePlayers);
+        for (int i = 0; i < onlinePlayers.size(); i++) {
+            Team team = kcdkTeams.get(i % kcdkTeams.size());
+            team.addEntry(onlinePlayers.get(i).getName());
+        }
+
+        sender.sendMessage("§a" + onlinePlayers.size() + "人のプレイヤーを" + kcdkTeams.size() + "チームに分配しました。");
+        for (Team team : kcdkTeams) {
+            sender.sendMessage("  §7" + team.getName() + ": §f" + String.join(", ", team.getEntries()));
+        }
+
+        return true;
+    }
+
+    private boolean handleChange(CommandSender sender, String playerName, String teamName) {
+        Scoreboard scoreboard = ScoreboardUtil.getMainScoreboard();
+        if (scoreboard == null) {
+            sender.sendMessage("§cScoreboardが利用できません。");
+            return true;
+        }
+
+        String fullTeamName = teamName.startsWith("kcdk.") ? teamName : "kcdk." + teamName;
+        Team team = scoreboard.getTeam(fullTeamName);
+        if (team == null) {
+            sender.sendMessage("§cチームが見つかりません: " + fullTeamName);
+            return true;
+        }
+
+        // 既存チームから除去
+        for (Team t : scoreboard.getTeams()) {
+            if (t.getName().startsWith("kcdk.")) {
+                t.removeEntry(playerName);
+            }
+        }
+
+        team.addEntry(playerName);
+        sender.sendMessage("§a" + playerName + " を " + fullTeamName + " に移動しました。");
+        return true;
+    }
+
     @Override
     public List<String> tabComplete(CommandSender sender, String[] args) {
         if (args.length == 1) {
-            // assign, change
             return KCDKCommand.filterStartingWith(args[0], Arrays.asList("assign", "change"));
         }
 
@@ -62,13 +131,11 @@ public class TeamCommand implements SubCommand {
 
             if ("change".equals(action)) {
                 if (args.length == 2) {
-                    // プレイヤー名の補完
                     List<String> playerNames = Bukkit.getOnlinePlayers().stream()
                             .map(Player::getName)
                             .collect(Collectors.toList());
                     return KCDKCommand.filterStartingWith(args[1], playerNames);
                 } else if (args.length == 3) {
-                    // チーム名の補完（kcdk.で始まるチームのみ）
                     return getKcdkTeams(args[2]);
                 }
             }
@@ -77,9 +144,6 @@ public class TeamCommand implements SubCommand {
         return Collections.emptyList();
     }
 
-    /**
-     * kcdk.で始まるチーム一覧を取得
-     */
     private List<String> getKcdkTeams(String prefix) {
         if (Bukkit.getScoreboardManager() == null) {
             return Collections.emptyList();
@@ -88,7 +152,7 @@ public class TeamCommand implements SubCommand {
         return Bukkit.getScoreboardManager().getMainScoreboard().getTeams().stream()
                 .map(Team::getName)
                 .filter(name -> name.startsWith("kcdk."))
-                .map(name -> name.substring(5)) // "kcdk."を除去
+                .map(name -> name.substring(5))
                 .collect(Collectors.collectingAndThen(
                         Collectors.toList(),
                         list -> KCDKCommand.filterStartingWith(prefix, list)

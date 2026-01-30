@@ -301,8 +301,9 @@
                             </div>
                             <div>
                                 <label class="mb-2 block text-sm font-semibold text-gray-800">アーマーカラー</label>
-                                <input type="color" name="team-color" value="#ef4444"
-                                    class="h-10 w-full rounded-xl border border-gray-300 cursor-pointer" />
+                                <select name="team-color" class="block w-full rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-gray-800 shadow-sm transition focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/20">
+                                    <option value="BLACK">BLACK</option><option value="DARK_BLUE">DARK_BLUE</option><option value="DARK_GREEN">DARK_GREEN</option><option value="DARK_AQUA">DARK_AQUA</option><option value="DARK_RED">DARK_RED</option><option value="DARK_PURPLE">DARK_PURPLE</option><option value="GOLD">GOLD</option><option value="GRAY">GRAY</option><option value="DARK_GRAY">DARK_GRAY</option><option value="BLUE">BLUE</option><option value="GREEN">GREEN</option><option value="AQUA">AQUA</option><option value="RED" selected>RED</option><option value="LIGHT_PURPLE">LIGHT_PURPLE</option><option value="YELLOW">YELLOW</option><option value="WHITE">WHITE</option>
+                                </select>
                             </div>
                             <div>
                                 <label class="mb-2 block text-sm font-semibold text-gray-800">リスポーン可能回数(-1=無限)</label>
@@ -462,8 +463,9 @@
                             </div>
                             <div>
                                 <label class="mb-2 block text-sm font-semibold text-gray-800">アーマーカラー</label>
-                                <input type="color" name="team-color" value="#3b82f6"
-                                    class="h-10 w-full rounded-xl border border-gray-300 cursor-pointer" />
+                                <select name="team-color" class="block w-full rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-gray-800 shadow-sm transition focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/20">
+                                    <option value="BLACK">BLACK</option><option value="DARK_BLUE">DARK_BLUE</option><option value="DARK_GREEN">DARK_GREEN</option><option value="DARK_AQUA">DARK_AQUA</option><option value="DARK_RED">DARK_RED</option><option value="DARK_PURPLE">DARK_PURPLE</option><option value="GOLD">GOLD</option><option value="GRAY">GRAY</option><option value="DARK_GRAY">DARK_GRAY</option><option value="BLUE" selected>BLUE</option><option value="GREEN">GREEN</option><option value="AQUA">AQUA</option><option value="RED">RED</option><option value="LIGHT_PURPLE">LIGHT_PURPLE</option><option value="YELLOW">YELLOW</option><option value="WHITE">WHITE</option>
+                                </select>
                             </div>
                             <div>
                                 <label class="mb-2 block text-sm font-semibold text-gray-800">リスポーン可能回数(-1=無限)</label>
@@ -781,6 +783,23 @@
                         適用する
                     </button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- コマンド表示モーダル -->
+    <div id="command-modal" class="fixed inset-0 z-50 hidden">
+        <div class="modal-overlay fixed inset-0 bg-black/50 backdrop-blur-sm" onclick="closeCommandModal()"></div>
+        <div class="fixed inset-0 flex items-center justify-center p-4">
+            <div class="modal-content relative w-full max-w-5xl rounded-2xl bg-white p-6 shadow-2xl">
+                <h3 class="text-lg font-bold text-gray-900 mb-2 text-center">分割コマンド</h3>
+                <p class="text-sm text-gray-600 mb-4 text-center">以下のコマンドをすべて実行してください</p>
+                <div id="command-list" class="space-y-2 max-h-96 overflow-y-auto mb-6">
+                </div>
+                <button type="button" onclick="closeCommandModal()"
+                    class="w-full rounded-xl bg-indigo-600 px-4 py-2.5 font-semibold text-white transition hover:bg-indigo-700">
+                    閉じる
+                </button>
             </div>
         </div>
     </div>
