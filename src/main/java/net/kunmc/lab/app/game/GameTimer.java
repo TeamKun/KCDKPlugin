@@ -25,14 +25,13 @@ public class GameTimer extends BukkitRunnable {
         if (gameManager.getState() != GameState.RUNNING) return;
 
         tickCount++;
+        long elapsedSeconds = tickCount / 20;
+
+        // アクションバー更新（毎tick）
+        updateActionBar(elapsedSeconds);
 
         // 毎秒処理
         if (tickCount % 20 == 0) {
-            long elapsedSeconds = tickCount / 20;
-
-            // アクションバー更新
-            updateActionBar(elapsedSeconds);
-
             // BossBar更新
             updateBossBar();
 
@@ -113,7 +112,7 @@ public class GameTimer extends BukkitRunnable {
 
         long totalSeconds = timeLimit.getTotalSeconds();
         if (elapsedSeconds >= totalSeconds) {
-            gameManager.stop("§e§l時間切れ！");
+            gameManager.stop("§e§lTimeUp!!!");
             return true;
         }
         return false;

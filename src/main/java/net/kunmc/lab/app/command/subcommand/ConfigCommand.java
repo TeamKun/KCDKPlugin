@@ -97,6 +97,8 @@ public class ConfigCommand implements SubCommand {
         map.put("N", "team");
         map.put("O", "count");
         map.put("P", "hasArmor");
+        map.put("Q", "disableHunger");
+        map.put("R", "items");
         return Collections.unmodifiableMap(map);
     }
 
@@ -157,6 +159,16 @@ public class ConfigCommand implements SubCommand {
             return handleEndConditionCommand(sender, Arrays.copyOfRange(args, 1, args.length));
         }
 
+        // disableHunger
+        if ("disablehunger".equals(subCommand)) {
+            return handleDisableHunger(sender, args);
+        }
+
+        // item
+        if ("item".equals(subCommand)) {
+            return handleItemCommand(sender, args);
+        }
+
         sender.sendMessage("§cUnknown config subcommand: " + subCommand);
         return true;
     }
@@ -171,6 +183,7 @@ public class ConfigCommand implements SubCommand {
         sender.sendMessage("§eBossbar: §f" + (config.getBossbar() != null ? config.getBossbar().getMcid() : "none"));
         sender.sendMessage("§eTime Limit: §f" + (config.getTimeLimit() != null ?
                 config.getTimeLimit().getHours() + "h " + config.getTimeLimit().getMinutes() + "m " + config.getTimeLimit().getSeconds() + "s" : "none"));
+        sender.sendMessage("§eDisable Hunger: §f" + config.isDisableHunger());
         sender.sendMessage("§eStartup Commands: §f" + config.getStartupCommands().size());
         sender.sendMessage("§eShutdown Commands: §f" + config.getShutdownCommands().size());
         sender.sendMessage("§eTeams: §f" + config.getTeams().size());
@@ -1068,13 +1081,107 @@ public class ConfigCommand implements SubCommand {
         }
     }
 
+    // ========== DisableHunger ==========
+
+    private boolean handleDisableHunger(CommandSender sender, String[] args) {
+        if (args.length < 2) {
+            sender.sendMessage("§cUsage: /kcdk config disableHunger <true|false>");
+            return true;
+        }
+        boolean value = Boolean.parseBoolean(args[1]);
+        Store.config.getGameConfig().setDisableHunger(value);
+        sender.sendMessage("§aDisable hunger set to: §f" + value);
+        return true;
+    }
+
+    // ========== Item Config ==========
+
+    private boolean handleItemCommand(CommandSender sender, String[] args) {
+        if (!(sender instanceof org.bukkit.entity.Player)) {
+            sender.sendMessage("§cThis command can only be used by players.");
+            return true;
+        }
+        if (args.length < 2) {
+            sender.sendMessage("§cUsage: /kcdk config item <scoreboard-team-name>");
+            return true;
+        }
+
+        String target = args[1];
+        org.bukkit.entity.Player player = (org.bukkit.entity.Player) sender;
+
+        // ターゲットからTeam/Roleを特定
+        GameConfig config = Store.config.getGameConfig();
+        List<String> existingItems = null;
+        String title;
+
+        // "kcdk.<team>" or "kcdk.<team>.<role>" のどちらか
+        if (!target.startsWith("kcdk.")) {
+            sender.sendMessage("§cTarget must be a scoreboard team name starting with 'kcdk.'");
+            return true;
+        }
+
+        // Scoreboardにそのチームが存在するか確認
+        if (Bukkit.getScoreboardManager() != null) {
+            Scoreboard scoreboard = Bukkit.getScoreboardManager().getMainScoreboard();
+            if (scoreboard.getTeam(target) == null) {
+                sender.sendMessage("§cScoreboard team not found: " + target);
+                return true;
+            }
+        }
+
+        String[] parts = target.substring(5).split("\\.", 2);
+        String teamName = parts[0];
+        String roleName = parts.length > 1 ? parts[1] : null;
+
+        // GameConfigからチームを検索（config上の名前で検索、なければScoreboard名そのもので検索）
+        Team team = config.getTeams().stream()
+                .filter(t -> t.getName().equalsIgnoreCase(teamName)
+                        || t.getName().equalsIgnoreCase("kcdk." + teamName))
+                .findFirst().orElse(null);
+
+        if (team == null) {
+            sender.sendMessage("§cTeam not found in config: " + teamName);
+            sender.sendMessage("§7Scoreboardチームは存在しますが、config importでチーム設定を読み込んでください。");
+            return true;
+        }
+
+        if (roleName != null) {
+            Role role = team.getRoles().stream()
+                    .filter(r -> r.getName().equalsIgnoreCase(roleName))
+                    .findFirst().orElse(null);
+            if (role == null) {
+                sender.sendMessage("§cRole not found: " + roleName);
+                return true;
+            }
+            existingItems = role.getItems();
+            title = "Items: " + teamName + "." + roleName;
+        } else {
+            existingItems = team.getItems();
+            title = "Items: " + teamName;
+        }
+
+        // 36スロットインベントリを作成
+        org.bukkit.inventory.Inventory inv = Bukkit.createInventory(null, 36, title);
+
+        // 既存アイテムを復元
+        if (existingItems != null && !existingItems.isEmpty()) {
+            org.bukkit.inventory.ItemStack[] items = net.kunmc.lab.app.util.ItemSerializeUtil.deserializeContents(existingItems);
+            for (int i = 0; i < items.length && i < 36; i++) {
+                inv.setItem(i, items[i]);
+            }
+        }
+
+        player.openInventory(inv);
+        return true;
+    }
+
     // ========== TAB Completion ==========
 
     @Override
     public List<String> tabComplete(CommandSender sender, String[] args) {
         if (args.length == 1) {
             return KCDKCommand.filterStartingWith(args[0], Arrays.asList(
-                    "gamemode", "bossbar", "timeLimit", "team", "endCondition", "show", "save", "reload", "import", "import-part"
+                    "gamemode", "bossbar", "timeLimit", "team", "endCondition", "disableHunger", "item", "show", "save", "reload", "import", "import-part"
             ));
         }
 
@@ -1092,6 +1199,14 @@ public class ConfigCommand implements SubCommand {
             if (args.length == 2) {
                 return KCDKCommand.filterStartingWith(args[1], Arrays.asList("set", "remove"));
             }
+        }
+
+        if ("disablehunger".equals(subCommand) && args.length == 2) {
+            return KCDKCommand.filterStartingWith(args[1], Arrays.asList("true", "false"));
+        }
+
+        if ("item".equals(subCommand) && args.length == 2) {
+            return tabCompleteItemTarget(args[1]);
         }
 
         if ("team".equals(subCommand)) {
@@ -1267,6 +1382,20 @@ public class ConfigCommand implements SubCommand {
         }
 
         return Collections.emptyList();
+    }
+
+    private List<String> tabCompleteItemTarget(String prefix) {
+        List<String> options = new ArrayList<>();
+        // Scoreboardから kcdk. で始まるチーム名を取得
+        if (Bukkit.getScoreboardManager() != null) {
+            Scoreboard scoreboard = Bukkit.getScoreboardManager().getMainScoreboard();
+            for (org.bukkit.scoreboard.Team sbTeam : scoreboard.getTeams()) {
+                if (sbTeam.getName().startsWith("kcdk.")) {
+                    options.add(sbTeam.getName());
+                }
+            }
+        }
+        return KCDKCommand.filterStartingWith(prefix, options);
     }
 
     // ========== Scoreboard Team Creation ==========

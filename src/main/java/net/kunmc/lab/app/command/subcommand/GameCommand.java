@@ -33,7 +33,7 @@ public class GameCommand implements SubCommand {
             case "stop":
                 String title = args.length >= 2
                         ? String.join(" ", Arrays.copyOfRange(args, 1, args.length))
-                        : "ゲームが強制終了されました。";
+                        : "ゲームが強制終了しました。";
                 Store.gameManager.stop(title);
                 return true;
 

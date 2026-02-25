@@ -46,6 +46,9 @@ public class GameConfigManager {
             gameConfig.setTimeLimit(loadTime(config.getConfigurationSection("timeLimit")));
         }
 
+        // disableHunger
+        gameConfig.setDisableHunger(config.getBoolean("disableHunger", false));
+
         // teams
         if (config.contains("teams")) {
             List<?> teamsList = config.getList("teams");
@@ -80,6 +83,7 @@ public class GameConfigManager {
     public void saveConfig() {
         config.set("config-version", gameConfig.getConfigVersion());
         config.set("gamemode", gameConfig.getGamemode());
+        config.set("disableHunger", gameConfig.isDisableHunger());
 
         // timeLimit
         if (gameConfig.getTimeLimit() != null) {
@@ -198,6 +202,11 @@ public class GameConfigManager {
         role.setExtendsEffects(section.getBoolean("extendsEffects", false));
         role.setExtendsItem(section.getBoolean("extendsItem", false));
 
+        // items
+        if (section.contains("items")) {
+            role.setItems(section.getStringList("items"));
+        }
+
         return role;
     }
 
@@ -225,6 +234,11 @@ public class GameConfigManager {
                     }
                 }
             }
+        }
+
+        // items
+        if (section.contains("items")) {
+            team.setItems(section.getStringList("items"));
         }
 
         // roles
@@ -365,6 +379,10 @@ public class GameConfigManager {
 
         section.set("extendsEffects", role.isExtendsEffects());
         section.set("extendsItem", role.isExtendsItem());
+
+        if (role.getItems() != null && !role.getItems().isEmpty()) {
+            section.set("items", role.getItems());
+        }
     }
 
     private void saveTeam(ConfigurationSection section, Team team) {
@@ -387,6 +405,10 @@ public class GameConfigManager {
             effectsList.add(effectSection);
         }
         section.set("effects", effectsList);
+
+        if (team.getItems() != null && !team.getItems().isEmpty()) {
+            section.set("items", team.getItems());
+        }
 
         List<ConfigurationSection> rolesList = new ArrayList<>();
         for (Role role : team.getRoles()) {

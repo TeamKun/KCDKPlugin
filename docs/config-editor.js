@@ -64,7 +64,13 @@ const KEY_MAP = {
     count: 'O',
 
     // Armor
-    hasArmor: 'P'
+    hasArmor: 'P',
+
+    // Hunger
+    disableHunger: 'Q',
+
+    // Items
+    items: 'R'
 };
 
 // 逆引き用マップ（デコード時に使用）
@@ -146,6 +152,7 @@ function decodeConfig(encoded) {
 function collectConfig() {
     const config = {
         gamemode: document.getElementById('gamemode')?.value || 'ADVENTURE',
+        disableHunger: document.getElementById('disable-hunger')?.checked || false,
         bossbar: collectBossbar(),
         timeLimit: collectTimeLimit(),
         startupCommands: collectCommands('startup-commands-container'),
@@ -212,7 +219,8 @@ function collectTeamFromCard(card) {
         readyLocation: collectReadyLocationFromCard(card),
         respawnLocation: collectRespawnLocationFromCard(card),
         effects: collectEffectsFromContainer(card),
-        roles: collectRolesFromCard(card)
+        roles: collectRolesFromCard(card),
+        items: collectItemsFromContainer(card)
     };
     return team;
 }
@@ -264,6 +272,14 @@ function collectEffectsFromContainer(container) {
     return effects;
 }
 
+function collectItemsFromContainer(container) {
+    const items = [];
+    container.querySelectorAll('.item-preset-check:checked').forEach(cb => {
+        items.push(cb.value);
+    });
+    return items;
+}
+
 function collectRolesFromCard(card) {
     const roles = [];
     card.querySelectorAll('.role-card').forEach(roleCard => {
@@ -286,6 +302,7 @@ function collectRoleFromCard(card) {
         respawnLocation: null,
         respawnCount: inheritRespawn ? null : (parseInt(card.querySelector('input[name="role-respawn-count"]')?.value) ?? null),
         effects: collectEffectsFromContainer(card),
+        items: collectItemsFromContainer(card),
         extendsEffects: card.querySelector('input[name="role-extends-effects"]')?.checked || false,
         extendsItem: card.querySelector('input[name="role-extends-item"]')?.checked || false
     };
@@ -1109,6 +1126,31 @@ function createTeamCard(teamNumber) {
                 </div>
             </div>
         </div>
+        <!-- アイテムプリセット -->
+        <div class="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-4">
+            <span class="block text-sm font-semibold text-gray-800 mb-3">アイテム (簡易プリセット)</span>
+            <p class="text-xs text-gray-500 mb-2">MC内で <code>/kcdk config item kcdk.チーム名</code> を使うと詳細編集できます</p>
+            <div class="items-container grid grid-cols-2 md:grid-cols-3 gap-2">
+                <label class="flex items-center gap-2 text-sm text-gray-700"><input type="checkbox" class="item-preset-check rounded" value="WOODEN_SWORD">木の剣</label>
+                <label class="flex items-center gap-2 text-sm text-gray-700"><input type="checkbox" class="item-preset-check rounded" value="STONE_SWORD">石の剣</label>
+                <label class="flex items-center gap-2 text-sm text-gray-700"><input type="checkbox" class="item-preset-check rounded" value="IRON_SWORD">鉄の剣</label>
+                <label class="flex items-center gap-2 text-sm text-gray-700"><input type="checkbox" class="item-preset-check rounded" value="GOLDEN_SWORD">金の剣</label>
+                <label class="flex items-center gap-2 text-sm text-gray-700"><input type="checkbox" class="item-preset-check rounded" value="DIAMOND_SWORD">ダイヤの剣</label>
+                <label class="flex items-center gap-2 text-sm text-gray-700"><input type="checkbox" class="item-preset-check rounded" value="NETHERITE_SWORD">ネザライトの剣</label>
+                <label class="flex items-center gap-2 text-sm text-gray-700"><input type="checkbox" class="item-preset-check rounded" value="WOODEN_PICKAXE">木のツルハシ</label>
+                <label class="flex items-center gap-2 text-sm text-gray-700"><input type="checkbox" class="item-preset-check rounded" value="STONE_PICKAXE">石のツルハシ</label>
+                <label class="flex items-center gap-2 text-sm text-gray-700"><input type="checkbox" class="item-preset-check rounded" value="IRON_PICKAXE">鉄のツルハシ</label>
+                <label class="flex items-center gap-2 text-sm text-gray-700"><input type="checkbox" class="item-preset-check rounded" value="WOODEN_AXE">木の斧</label>
+                <label class="flex items-center gap-2 text-sm text-gray-700"><input type="checkbox" class="item-preset-check rounded" value="STONE_AXE">石の斧</label>
+                <label class="flex items-center gap-2 text-sm text-gray-700"><input type="checkbox" class="item-preset-check rounded" value="IRON_AXE">鉄の斧</label>
+                <label class="flex items-center gap-2 text-sm text-gray-700"><input type="checkbox" class="item-preset-check rounded" value="WOODEN_SHOVEL">木のシャベル</label>
+                <label class="flex items-center gap-2 text-sm text-gray-700"><input type="checkbox" class="item-preset-check rounded" value="STONE_SHOVEL">石のシャベル</label>
+                <label class="flex items-center gap-2 text-sm text-gray-700"><input type="checkbox" class="item-preset-check rounded" value="IRON_SHOVEL">鉄のシャベル</label>
+                <label class="flex items-center gap-2 text-sm text-gray-700"><input type="checkbox" class="item-preset-check rounded" value="BOW">弓 + 矢64</label>
+                <label class="flex items-center gap-2 text-sm text-gray-700"><input type="checkbox" class="item-preset-check rounded" value="SHIELD">盾</label>
+                <label class="flex items-center gap-2 text-sm text-gray-700"><input type="checkbox" class="item-preset-check rounded" value="COOKED_BEEF">焼き牛肉 x64</label>
+            </div>
+        </div>
         <!-- エフェクト -->
         <div class="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-4">
             <span class="block text-sm font-semibold text-gray-800 mb-3">エフェクト</span>
@@ -1476,6 +1518,13 @@ function createRoleCard() {
                         <div class="relative h-4 w-7 rounded-full bg-gray-300 transition-colors duration-200 peer-checked:bg-indigo-600 after:absolute after:left-0.5 after:top-0.5 after:h-3 after:w-3 after:rounded-full after:bg-white after:transition-transform after:duration-200 peer-checked:after:translate-x-3"></div>
                     </label>
                 </div>
+                <div class="flex items-center gap-3 mb-2">
+                    <label class="inline-flex cursor-pointer items-center gap-1">
+                        <span class="text-xs text-gray-400">チームエフェクトを継承</span>
+                        <input type="checkbox" name="role-extends-effects" class="peer sr-only" />
+                        <div class="relative h-4 w-7 rounded-full bg-gray-300 transition-colors duration-200 peer-checked:bg-indigo-600 after:absolute after:left-0.5 after:top-0.5 after:h-3 after:w-3 after:rounded-full after:bg-white after:transition-transform after:duration-200 peer-checked:after:translate-x-3"></div>
+                    </label>
+                </div>
                 <div class="role-effects-container flex flex-wrap items-center gap-2">
                     <!-- ロールエフェクトがここに追加される -->
                     <button type="button" class="add-role-effect-btn flex items-center justify-center w-36 h-30 rounded-lg border-2 border-dashed border-gray-300 text-gray-400 transition hover:border-indigo-400 hover:text-indigo-500">
@@ -1484,6 +1533,38 @@ function createRoleCard() {
                         </svg>
                     </button>
                 </div>
+            </div>
+        </div>
+        <!-- アイテム設定 -->
+        <div class="mt-3 rounded-lg border border-gray-200 bg-gray-50 p-3">
+            <div class="flex items-center gap-2 mb-2">
+                <span class="text-xs font-semibold text-gray-600">アイテム (簡易プリセット)</span>
+                <label class="inline-flex cursor-pointer items-center gap-1">
+                    <span class="text-xs text-gray-400">チームアイテムを継承</span>
+                    <input type="checkbox" name="role-extends-item" class="peer sr-only" />
+                    <div class="relative h-4 w-7 rounded-full bg-gray-300 transition-colors duration-200 peer-checked:bg-indigo-600 after:absolute after:left-0.5 after:top-0.5 after:h-3 after:w-3 after:rounded-full after:bg-white after:transition-transform after:duration-200 peer-checked:after:translate-x-3"></div>
+                </label>
+            </div>
+            <p class="text-xs text-gray-500 mb-2">MC内で <code>/kcdk config item kcdk.チーム名.ロール名</code> を使うと詳細編集できます</p>
+            <div class="items-container grid grid-cols-2 md:grid-cols-3 gap-1">
+                <label class="flex items-center gap-1 text-xs text-gray-700"><input type="checkbox" class="item-preset-check rounded" value="WOODEN_SWORD">木の剣</label>
+                <label class="flex items-center gap-1 text-xs text-gray-700"><input type="checkbox" class="item-preset-check rounded" value="STONE_SWORD">石の剣</label>
+                <label class="flex items-center gap-1 text-xs text-gray-700"><input type="checkbox" class="item-preset-check rounded" value="IRON_SWORD">鉄の剣</label>
+                <label class="flex items-center gap-1 text-xs text-gray-700"><input type="checkbox" class="item-preset-check rounded" value="GOLDEN_SWORD">金の剣</label>
+                <label class="flex items-center gap-1 text-xs text-gray-700"><input type="checkbox" class="item-preset-check rounded" value="DIAMOND_SWORD">ダイヤの剣</label>
+                <label class="flex items-center gap-1 text-xs text-gray-700"><input type="checkbox" class="item-preset-check rounded" value="NETHERITE_SWORD">ネザライトの剣</label>
+                <label class="flex items-center gap-1 text-xs text-gray-700"><input type="checkbox" class="item-preset-check rounded" value="WOODEN_PICKAXE">木のツルハシ</label>
+                <label class="flex items-center gap-1 text-xs text-gray-700"><input type="checkbox" class="item-preset-check rounded" value="STONE_PICKAXE">石のツルハシ</label>
+                <label class="flex items-center gap-1 text-xs text-gray-700"><input type="checkbox" class="item-preset-check rounded" value="IRON_PICKAXE">鉄のツルハシ</label>
+                <label class="flex items-center gap-1 text-xs text-gray-700"><input type="checkbox" class="item-preset-check rounded" value="WOODEN_AXE">木の斧</label>
+                <label class="flex items-center gap-1 text-xs text-gray-700"><input type="checkbox" class="item-preset-check rounded" value="STONE_AXE">石の斧</label>
+                <label class="flex items-center gap-1 text-xs text-gray-700"><input type="checkbox" class="item-preset-check rounded" value="IRON_AXE">鉄の斧</label>
+                <label class="flex items-center gap-1 text-xs text-gray-700"><input type="checkbox" class="item-preset-check rounded" value="WOODEN_SHOVEL">木のシャベル</label>
+                <label class="flex items-center gap-1 text-xs text-gray-700"><input type="checkbox" class="item-preset-check rounded" value="STONE_SHOVEL">石のシャベル</label>
+                <label class="flex items-center gap-1 text-xs text-gray-700"><input type="checkbox" class="item-preset-check rounded" value="IRON_SHOVEL">鉄のシャベル</label>
+                <label class="flex items-center gap-1 text-xs text-gray-700"><input type="checkbox" class="item-preset-check rounded" value="BOW">弓 + 矢64</label>
+                <label class="flex items-center gap-1 text-xs text-gray-700"><input type="checkbox" class="item-preset-check rounded" value="SHIELD">盾</label>
+                <label class="flex items-center gap-1 text-xs text-gray-700"><input type="checkbox" class="item-preset-check rounded" value="COOKED_BEEF">焼き牛肉 x64</label>
             </div>
         </div>
     `;
@@ -2305,21 +2386,26 @@ function setupGenerateCommandButton() {
 // コマンドオプション管理
 function createCommandInput(containerId, value = '') {
     const container = document.getElementById(containerId);
-    const addBtn = container.querySelector('button');
+    const addBtn = container.querySelector(':scope > button');
 
     const wrapper = document.createElement('div');
     wrapper.className = 'command-item flex items-center gap-2';
-    wrapper.innerHTML = `
-        <input type="text" name="${containerId === 'startup-commands-container' ? 'startup-command' : 'shutdown-command'}"
-            value="${value}"
-            placeholder="例: /say ゲーム開始！"
-            class="flex-1 block rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-gray-800 shadow-sm transition placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/20 font-mono text-sm" />
-        <button type="button" class="delete-command-btn text-gray-400 hover:text-red-500 transition p-1">
-            <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path d="M6 18L18 6M6 6l12 12" />
-            </svg>
-        </button>
-    `;
+
+    const inputName = containerId === 'startup-commands-container' ? 'startup-command' : 'shutdown-command';
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.name = inputName;
+    input.value = value;
+    input.placeholder = '例: /say ゲーム開始！';
+    input.className = 'flex-1 block rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-gray-800 shadow-sm transition placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/20 font-mono text-sm';
+
+    const deleteBtn = document.createElement('button');
+    deleteBtn.type = 'button';
+    deleteBtn.className = 'delete-command-btn text-gray-400 hover:text-red-500 transition p-1';
+    deleteBtn.innerHTML = `<svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" /></svg>`;
+
+    wrapper.appendChild(input);
+    wrapper.appendChild(deleteBtn);
 
     container.insertBefore(wrapper, addBtn);
 
@@ -2358,6 +2444,7 @@ function collectFullState() {
         gamemode: document.getElementById('gamemode')?.value || 'ADVENTURE',
         bossbarDisable: document.getElementById('bossbar-disable')?.checked || false,
         bossbarMcid: document.getElementById('bossbar-mcid')?.value || '',
+        disableHunger: document.getElementById('disable-hunger')?.checked || false,
         timelimitDisable: document.getElementById('timelimit-disable')?.checked || false,
         timelimitHours: document.getElementById('timelimit-hours')?.value || '0',
         timelimitMinutes: document.getElementById('timelimit-minutes')?.value || '0',
@@ -2400,9 +2487,15 @@ function collectFullState() {
             respawnZ: card.querySelector('input[name="team-respawn-z"]')?.value || '0',
             respawnYaw: card.querySelector('input[name="team-respawn-yaw"]')?.value || '0',
             respawnPitch: card.querySelector('input[name="team-respawn-pitch"]')?.value || '180',
+            items: [],
             effects: [],
             roles: []
         };
+
+        // アイテム
+        card.querySelectorAll('.item-preset-check:checked').forEach(cb => {
+            team.items.push(cb.value);
+        });
 
         // エフェクト
         card.querySelectorAll('.effect-card').forEach(ec => {
@@ -2444,8 +2537,12 @@ function collectFullState() {
                 inheritEffects: rc.querySelector('input[name="role-inherit-effects"]')?.checked ?? true,
                 extendsEffects: rc.querySelector('input[name="role-extends-effects"]')?.checked || false,
                 extendsItem: rc.querySelector('input[name="role-extends-item"]')?.checked || false,
+                items: [],
                 effects: []
             };
+            rc.querySelectorAll('.item-preset-check:checked').forEach(cb => {
+                role.items.push(cb.value);
+            });
             rc.querySelectorAll('.role-effect-card').forEach(rec => {
                 role.effects.push({
                     name: rec.querySelector('select[name="role-effect-name"]')?.value || '',
@@ -2535,6 +2632,9 @@ function restoreStateFromLocalStorage() {
     const bossbarMcid = document.getElementById('bossbar-mcid');
     if (bossbarMcid) bossbarMcid.value = state.bossbarMcid || '';
 
+    const disableHunger = document.getElementById('disable-hunger');
+    if (disableHunger) disableHunger.checked = state.disableHunger || false;
+
     const timelimitDisable = document.getElementById('timelimit-disable');
     if (timelimitDisable) timelimitDisable.checked = state.timelimitDisable || false;
 
@@ -2543,7 +2643,9 @@ function restoreStateFromLocalStorage() {
     setVal('timelimit-minutes', state.timelimitMinutes || '0');
     setVal('timelimit-seconds', state.timelimitSeconds || '0');
 
-    // コマンド復元
+    // コマンド復元（既存をクリアしてから追加）
+    document.querySelectorAll('#startup-commands-container .command-item').forEach(el => el.remove());
+    document.querySelectorAll('#shutdown-commands-container .command-item').forEach(el => el.remove());
     (state.startupCommands || []).forEach(cmd => {
         createCommandInput('startup-commands-container', cmd);
     });
@@ -2594,6 +2696,12 @@ function restoreStateFromLocalStorage() {
         setInput('team-respawn-z', team.respawnZ || '0');
         setInput('team-respawn-yaw', team.respawnYaw || '0');
         setInput('team-respawn-pitch', team.respawnPitch || '180');
+
+        // アイテム復元
+        (team.items || []).forEach(itemVal => {
+            const cb = card.querySelector(`.item-preset-check[value="${itemVal}"]`);
+            if (cb) cb.checked = true;
+        });
 
         // 背景色更新
         updateTeamCardBackground(card);
@@ -2651,6 +2759,12 @@ function restoreStateFromLocalStorage() {
             setRoleCheck('role-inherit-effects', role.inheritEffects ?? true);
             setRoleCheck('role-extends-effects', role.extendsEffects || false);
             setRoleCheck('role-extends-item', role.extendsItem || false);
+
+            // アイテム復元
+            (role.items || []).forEach(itemVal => {
+                const cb = rc.querySelector(`.item-preset-check[value="${itemVal}"]`);
+                if (cb) cb.checked = true;
+            });
 
             // 継承トグルの状態を反映
             rc.querySelectorAll('.role-inherit-toggle').forEach(t => t.dispatchEvent(new Event('change')));

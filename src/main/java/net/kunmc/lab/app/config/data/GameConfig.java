@@ -13,6 +13,7 @@ public class GameConfig {
     private List<String> shutdownCommands = new ArrayList<>();
     private List<Team> teams = new ArrayList<>();
     private List<EndCondition> endConditions = new ArrayList<>();
+    private boolean disableHunger = false;
 
     public GameConfig() {
     }
@@ -79,5 +80,13 @@ public class GameConfig {
 
     public void setEndConditions(List<EndCondition> endConditions) {
         this.endConditions = endConditions;
+    }
+
+    public boolean isDisableHunger() {
+        return disableHunger;
+    }
+
+    public void setDisableHunger(boolean disableHunger) {
+        this.disableHunger = disableHunger;
     }
 }

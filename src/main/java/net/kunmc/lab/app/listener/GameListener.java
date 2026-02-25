@@ -9,12 +9,16 @@ import net.kunmc.lab.app.game.GameManager;
 import net.kunmc.lab.app.game.GameState;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.Sound;
+import org.bukkit.entity.Arrow;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Projectile;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import net.kunmc.lab.app.game.PlayerData;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
@@ -66,11 +70,23 @@ public class GameListener implements Listener {
         GameManager gm = Store.gameManager;
         if (gm == null || gm.getState() != GameState.RUNNING) return;
 
-        // プレイヤー同士の攻撃のみ対象
-        if (!(event.getEntity() instanceof Player) || !(event.getDamager() instanceof Player)) return;
-
+        if (!(event.getEntity() instanceof Player)) return;
         Player victim = (Player) event.getEntity();
-        Player attacker = (Player) event.getDamager();
+
+        // 攻撃者を特定（直接攻撃 or 飛び道具）
+        Player attacker = null;
+        boolean isArrow = false;
+        if (event.getDamager() instanceof Player) {
+            attacker = (Player) event.getDamager();
+        } else if (event.getDamager() instanceof Projectile) {
+            Projectile proj = (Projectile) event.getDamager();
+            if (proj.getShooter() instanceof Player) {
+                attacker = (Player) proj.getShooter();
+                isArrow = event.getDamager() instanceof Arrow;
+            }
+        }
+
+        if (attacker == null) return;
 
         PlayerData victimData = gm.getPlayers().get(victim.getUniqueId());
         PlayerData attackerData = gm.getPlayers().get(attacker.getUniqueId());
@@ -80,6 +96,12 @@ public class GameListener implements Listener {
         // 同一チームならFriendlyFire禁止（ロールが違っても同一チーム扱い）
         if (victimData.getTeamName().equals(attackerData.getTeamName())) {
             event.setCancelled(true);
+            return;
+        }
+
+        // 矢がプレイヤーに命中した場合、射手に経験値オーブの音を鳴らす
+        if (isArrow) {
+            attacker.playSound(attacker.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 1.0f);
         }
     }
 
@@ -97,6 +119,18 @@ public class GameListener implements Listener {
 
         if (from.getBlockX() != to.getBlockX() || from.getBlockY() != to.getBlockY() || from.getBlockZ() != to.getBlockZ()) {
             event.setTo(new Location(from.getWorld(), from.getX(), from.getY(), from.getZ(), to.getYaw(), to.getPitch()));
+        }
+    }
+
+    @EventHandler
+    public void onFoodLevelChange(FoodLevelChangeEvent event) {
+        GameManager gm = Store.gameManager;
+        if (gm == null || gm.getState() != GameState.RUNNING) return;
+        if (!Store.config.getGameConfig().isDisableHunger()) return;
+
+        if (event.getEntity() instanceof Player) {
+            event.setFoodLevel(20);
+            event.setCancelled(true);
         }
     }
 

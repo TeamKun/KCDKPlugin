@@ -6,6 +6,7 @@ import net.kunmc.lab.app.config.data.endcondition.*;
 import net.kunmc.lab.app.game.condition.*;
 import net.kunmc.lab.app.util.ArmorUtil;
 import net.kunmc.lab.app.util.EffectUtil;
+import net.kunmc.lab.app.util.ItemSerializeUtil;
 import net.kunmc.lab.app.util.ScoreboardUtil;
 import org.bukkit.*;
 import org.bukkit.boss.BarColor;
@@ -74,6 +75,9 @@ public class GameManager {
         beaconHPs.clear();
         conditionCheckers.clear();
 
+        // 前回のK/Dタブ名をクリア
+        ScoreboardUtil.resetAllTabNames();
+
         // チームデータ初期化
         for (Team team : config.getTeams()) {
             TeamData td = new TeamData(team.getName(), 0);
@@ -86,6 +90,14 @@ public class GameManager {
         // ビーコンHP初期化
         for (EndCondition ec : config.getEndConditions()) {
             initBeaconHPs(ec);
+        }
+
+        // ビーコンブロック設置
+        for (Map.Entry<GameLocation, Integer> entry : beaconHPs.entrySet()) {
+            Location beaconLoc = entry.getKey().toBukkitLocation();
+            if (beaconLoc.getWorld() != null) {
+                beaconLoc.getBlock().setType(Material.BEACON);
+            }
         }
 
         // チケット初期化
@@ -474,32 +486,77 @@ public class GameManager {
         if (state != GameState.RUNNING && state != GameState.STARTING) return;
 
         PlayerData pd = players.get(player.getUniqueId());
-        if (pd == null) return;
 
-        pd.setOnline(true);
+        if (pd != null) {
+            // 再ログイン — そのまま再開（リスポーン地点移動なし）
+            pd.setOnline(true);
 
-        Team team = findTeamConfig(pd.getTeamName());
-        if (team == null) return;
-        Role role = pd.getRoleName() != null ? findRole(team, pd.getRoleName()) : null;
+            if (!pd.isAlive()) {
+                player.setGameMode(GameMode.SPECTATOR);
+            }
 
-        if (!pd.isAlive()) {
-            player.setGameMode(GameMode.SPECTATOR);
+            if (bossBar != null) {
+                bossBar.addPlayer(player);
+            }
             return;
         }
 
-        // 状態復元
+        // 新規途中参加 — Scoreboardチームから所属を確認
         GameConfig config = Store.config.getGameConfig();
+        Scoreboard scoreboard = ScoreboardUtil.getMainScoreboard();
+        if (scoreboard == null) return;
+
+        String playerName = player.getName();
+        Team matchedTeam = null;
+        Role matchedRole = null;
+
+        for (Team team : config.getTeams()) {
+            // ロールチェック（先にチェック）
+            for (Role role : team.getRoles()) {
+                org.bukkit.scoreboard.Team sbRole = scoreboard.getTeam("kcdk." + team.getName() + "." + role.getName());
+                if (sbRole != null && sbRole.hasEntry(playerName)) {
+                    matchedTeam = team;
+                    matchedRole = role;
+                    break;
+                }
+            }
+            if (matchedTeam != null) break;
+
+            // チーム直属チェック
+            org.bukkit.scoreboard.Team sbTeam = scoreboard.getTeam("kcdk." + team.getName());
+            if (sbTeam != null && sbTeam.hasEntry(playerName)) {
+                matchedTeam = team;
+                break;
+            }
+        }
+
+        if (matchedTeam == null) return;
+
+        // 新規参加者を登録
+        int respawns = matchedRole != null && matchedRole.getRespawnCount() != null
+                ? matchedRole.getRespawnCount() : matchedTeam.getRespawnCount();
+        pd = new PlayerData(player.getUniqueId(), matchedTeam.getName(),
+                matchedRole != null ? matchedRole.getName() : null, respawns);
+        players.put(player.getUniqueId(), pd);
+
+        TeamData td = teams.get(matchedTeam.getName());
+        if (td != null) {
+            td.addPlayer(player.getUniqueId());
+        }
+
+        // リスポーン地点にTP・装備・エフェクト付与
         GameMode gameMode = "ADVENTURE".equalsIgnoreCase(config.getGamemode()) ? GameMode.ADVENTURE : GameMode.SURVIVAL;
 
-        GameLocation respawnLoc = (role != null && role.getRespawnLocation() != null) ? role.getRespawnLocation() : team.getRespawnLocation();
+        GameLocation respawnLoc = (matchedRole != null && matchedRole.getRespawnLocation() != null)
+                ? matchedRole.getRespawnLocation() : matchedTeam.getRespawnLocation();
         if (respawnLoc != null) {
             player.teleport(respawnLoc.toBukkitLocation());
         }
 
         player.setGameMode(gameMode);
         player.getInventory().clear();
-        equipPlayer(player, team, role);
-        List<PotionEffect> effects = EffectUtil.resolveEffects(team, role);
+        equipPlayer(player, matchedTeam, matchedRole);
+        List<PotionEffect> effects = EffectUtil.resolveEffects(matchedTeam, matchedRole);
         EffectUtil.applyEffects(player, effects);
 
         ScoreboardUtil.setPlayerTabName(player, player.getName());
@@ -561,6 +618,35 @@ public class GameManager {
                 colorInt = team.getArmorColorAsInt();
             }
             player.getInventory().setChestplate(ArmorUtil.createColoredChestplate(colorInt));
+        }
+
+        // アイテム配布
+        if (role != null) {
+            if (role.isExtendsItem()) {
+                // チームアイテム + ロールアイテム
+                giveItems(player, team.getItems());
+                giveItems(player, role.getItems());
+            } else {
+                // ロールアイテムのみ（ロールにアイテムがなければチームアイテム）
+                if (role.getItems() != null && !role.getItems().isEmpty()) {
+                    giveItems(player, role.getItems());
+                } else {
+                    giveItems(player, team.getItems());
+                }
+            }
+        } else {
+            // チームアイテムのみ
+            giveItems(player, team.getItems());
+        }
+    }
+
+    private void giveItems(Player player, java.util.List<String> items) {
+        if (items == null || items.isEmpty()) return;
+        org.bukkit.inventory.ItemStack[] deserialized = ItemSerializeUtil.deserializeContents(items);
+        for (org.bukkit.inventory.ItemStack item : deserialized) {
+            if (item != null) {
+                player.getInventory().addItem(item);
+            }
         }
     }
 

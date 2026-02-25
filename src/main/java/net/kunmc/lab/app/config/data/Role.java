@@ -12,6 +12,7 @@ public class Role {
     private Integer respawnCount;
     private Boolean hasArmor;
     private List<Effect> effects = new ArrayList<>();
+    private List<String> items = new ArrayList<>();
     private boolean extendsEffects;
     private boolean extendsItem;
 
@@ -90,6 +91,14 @@ public class Role {
 
     public void setEffects(List<Effect> effects) {
         this.effects = effects;
+    }
+
+    public List<String> getItems() {
+        return items;
+    }
+
+    public void setItems(List<String> items) {
+        this.items = items;
     }
 
     public boolean isExtendsEffects() {

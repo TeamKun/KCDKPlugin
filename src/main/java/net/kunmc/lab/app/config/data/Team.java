@@ -13,6 +13,7 @@ public class Team {
     private GameLocation respawnLocation;
     private List<Effect> effects = new ArrayList<>();
     private List<Role> roles = new ArrayList<>();
+    private List<String> items = new ArrayList<>();
 
     public Team() {
     }
@@ -94,6 +95,14 @@ public class Team {
 
     public void setRoles(List<Role> roles) {
         this.roles = roles;
+    }
+
+    public List<String> getItems() {
+        return items;
+    }
+
+    public void setItems(List<String> items) {
+        this.items = items;
     }
 
     /**
