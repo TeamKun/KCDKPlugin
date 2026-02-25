@@ -1,0 +1,15 @@
+{
+  "name": "kcdk-bot",
+  "version": "1.0.0",
+  "description": "KCDK テスト用 Mineflayer ボット",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "red": "node index.js --team red --count 1",
+    "2v2": "node index.js --team red --count 2 --team blue --count 2"
+  },
+  "license": "ISC",
+  "dependencies": {
+    "mineflayer": "^4.25.0"
+  }
+}
