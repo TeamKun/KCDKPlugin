@@ -35,6 +35,14 @@ public class GameListener implements Listener {
         Player victim = event.getEntity();
         Player killer = victim.getKiller();
 
+        // getKiller() が null の場合、DamageSource から直接エンティティを取得 (Paper /damage by <player> 対応)
+        if (killer == null) {
+            org.bukkit.entity.Entity cause = event.getDamageSource().getCausingEntity();
+            if (cause instanceof Player) {
+                killer = (Player) cause;
+            }
+        }
+
         gm.handleDeath(victim, killer);
     }
 

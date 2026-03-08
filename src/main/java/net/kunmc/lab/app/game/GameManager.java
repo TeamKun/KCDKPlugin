@@ -431,16 +431,13 @@ public class GameManager {
             }
         }
 
-        // リスポーン消費
-        victimData.consumeRespawn();
-
         // チケット消費
         TeamData td = teams.get(victimData.getTeamName());
         if (td != null) {
             td.consumeTicket();
         }
 
-        // リスポーン残なし→スペクテイター
+        // リスポーン残なし→スペクテイター (consumeRespawn は handleRespawn で実行)
         if (!victimData.hasRespawnsLeft()) {
             victimData.setAlive(false);
         }
@@ -460,17 +457,21 @@ public class GameManager {
             return;
         }
 
+        // リスポーン残数を消費 (死亡時ではなくリスポーン時に消費することでカウントを正確にする)
+        pd.consumeRespawn();
+
         Team team = findTeamConfig(pd.getTeamName());
         if (team == null) return;
         Role role = pd.getRoleName() != null ? findRole(team, pd.getRoleName()) : null;
 
-        // リスポーン地点
+        // リスポーン地点 (PlayerRespawnEvent 内では teleport が無効なので 2tick 後に実行)
         GameLocation respawnLoc = (role != null && role.getRespawnLocation() != null) ? role.getRespawnLocation() : team.getRespawnLocation();
         if (respawnLoc != null) {
-            player.teleport(respawnLoc.toBukkitLocation());
+            final Location tpLoc = respawnLoc.toBukkitLocation();
+            Bukkit.getScheduler().runTaskLater(Store.plugin, () -> player.teleport(tpLoc), 2L);
         }
 
-        // 1tick遅延で装備復元
+        // 装備復元は TP 後に (3tick)
         GameConfig config = Store.config.getGameConfig();
         GameMode gameMode = "ADVENTURE".equalsIgnoreCase(config.getGamemode()) ? GameMode.ADVENTURE : GameMode.SURVIVAL;
         Bukkit.getScheduler().runTaskLater(Store.plugin, () -> {
@@ -479,7 +480,7 @@ public class GameManager {
             equipPlayer(player, team, role);
             List<PotionEffect> effects = EffectUtil.resolveEffects(team, role);
             EffectUtil.applyEffects(player, effects);
-        }, 1L);
+        }, 3L);
     }
 
     public void handleJoin(Player player) {
@@ -720,7 +721,6 @@ public class GameManager {
             Bukkit.broadcastMessage("§7" + indent + "- §f" + tc.getTeam() + " §7のチケット(残" + tc.getCount() + ")消費");
         } else if (ec instanceof BeaconCondition) {
             BeaconCondition bc = (BeaconCondition) ec;
-            GameLocation loc = bc.getLocation();
             Bukkit.broadcastMessage("§7" + indent + "- §fビーコン§7(HP:" + bc.getHitpoint() + ") §7の破壊");
         } else if (ec instanceof CompositeCondition) {
             CompositeCondition cc = (CompositeCondition) ec;

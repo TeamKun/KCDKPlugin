@@ -2,7 +2,29 @@
   "permissions": {
     "allow": [
       "Bash(start editor/index.html)",
-      "Bash(./gradlew build:*)"
+      "Bash(./gradlew build:*)",
+      "Bash(C:UsersOwnerDocumentsKCDKPlugingradlew.bat build)",
+      "Bash(bash:*)",
+      "WebFetch(domain:scenamatica.kunlab.org)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(node --version)",
+      "Bash(npm --version)",
+      "Bash(node index.js --help)",
+      "Bash(git commit:*)",
+      "Bash(xargs grep -l \"tablist\\\\|playerList\")",
+      "Bash(grep -n \"TC-\" /c/Users/Owner/Documents/KCDKPlugin/test/scenarios/*.md)",
+      "Bash(node -e \":*)",
+      "Bash(node -e \"const m = require\\(''mineflayer''\\); console.log\\(''mineflayer version:'', require\\(''./node_modules/mineflayer/package.json''\\).version\\)\")",
+      "Bash(node test/index.js 01)",
+      "Bash(node test/index.js 02)",
+      "Bash(node test/index.js 03)",
+      "Bash(node test/index.js 04)",
+      "Bash(./gradlew buildAndCopy)",
+      "Bash(node bot/test/index.js --suite 04)",
+      "Bash(xargs grep -l \"title\")",
+      "Bash(xargs grep -l \"1.21\")",
+      "Bash(node bot/test/index.js --suite 05)"
     ]
   }
 }

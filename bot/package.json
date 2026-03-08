@@ -6,10 +6,17 @@
   "scripts": {
     "start": "node index.js",
     "red": "node index.js --team red --count 1",
-    "2v2": "node index.js --team red --count 2 --team blue --count 2"
+    "2v2": "node index.js --team red --count 2 --team blue --count 2",
+    "test": "node test/index.js",
+    "test:setup": "node test/index.js 01",
+    "test:config": "node test/index.js 02",
+    "test:game": "node test/index.js 03",
+    "test:combat": "node test/index.js 04",
+    "test:end": "node test/index.js 05",
+    "test:ui": "node test/index.js 06"
   },
   "license": "ISC",
   "dependencies": {
-    "mineflayer": "^4.25.0"
+    "mineflayer": "^4.35.0"
   }
 }
